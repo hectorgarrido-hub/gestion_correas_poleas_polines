@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestión de Correas, Poleas y Polines — CMP (En línea)</title>
+<link rel="stylesheet" href="shared.css">
+<script src="poleas-data.js"></script>
+<script src="polines-data.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  html,body,#root { height:100%; }
+  body { overflow:hidden; }
+  .app { display:flex; flex-direction:column; height:100vh; background:var(--op-bg); overflow:hidden; }
+
+  /* NAVBAR — identity layer */
+  .navbar { background:var(--id-bg); border-bottom:2px solid var(--cmp-hematita-600); padding:0 20px; height:52px; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .nb-left { display:flex; align-items:center; gap:12px; }
+  .nb-logo { height:42px; background:transparent; padding:0; display:flex; align-items:center; flex-shrink:0; overflow:visible; }
+  .nb-brand { display:flex; flex-direction:column; gap:1px; }
+  .nb-name { font-size:0.857rem; font-weight:600; color:#fff; letter-spacing:.04em; }
+  .nb-sub  { font-size:0.714rem; color:var(--cmp-blue-300); }
+  .nb-right { display:flex; align-items:center; gap:10px; }
+  .nb-status { display:flex; align-items:center; gap:4px; font-size:0.714rem; color:var(--cmp-blue-300); }
+  .nb-pulse { width:6px; height:6px; border-radius:50%; background:var(--status-running); }
+  .nb-time { font-size:0.857rem; color:var(--cmp-blue-200); font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
+  .nb-user { padding:3px 10px; background:var(--cmp-blue-700); border-radius:var(--radius-1); font-size:0.786rem; color:var(--cmp-blue-100); display:flex; align-items:center; gap:5px; }
+  .nb-btn { padding:4px 11px; background:rgba(255,255,255,0.07); border:1px solid var(--cmp-blue-700); color:var(--cmp-blue-100); border-radius:var(--radius-1); font-size:0.75rem; font-weight:500; cursor:pointer; font-family:var(--font-sans); transition:all .12s; display:flex; align-items:center; gap:5px; }
+  .nb-btn:hover { background:var(--cmp-blue-700); color:#fff; border-color:var(--cmp-blue-500); }
+
+  /* BREADCRUMB */
+  .breadcrumb { background:var(--op-surface-1); border-bottom:1px solid var(--op-border-subtle); padding:0 20px; height:32px; display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .bc-item { font-size:0.786rem; color:var(--op-text-3); }
+  .bc-item.active { color:var(--op-text-1); font-weight:500; }
+  .bc-sep { color:var(--op-text-3); font-size:0.714rem; }
+  .alarm-badge { font-size:0.714rem; font-weight:500; padding:2px 8px; border-radius:var(--radius-1); white-space:nowrap; }
+
+  /* PROCESS + TAB SELECTOR */
+  .selbar { background:var(--op-surface-1); border-bottom:1px solid var(--op-border-subtle); padding:8px 20px; display:flex; align-items:center; gap:16px; flex-shrink:0; flex-wrap:wrap; }
+  .sel-label { font-size:0.714rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); }
+  .proc-btn { display:inline-flex; align-items:center; gap:7px; padding:5px 14px; border:1px solid var(--op-border-subtle); background:var(--op-surface-2); border-radius:var(--radius-1); font-family:var(--font-sans); font-size:0.857rem; font-weight:500; color:var(--op-text-2); cursor:pointer; transition:all .12s; }
+  .proc-btn:hover { border-color:var(--op-border-strong); color:var(--op-text-1); }
+  .proc-btn.active { background:var(--cmp-blue-700); border-color:var(--cmp-blue-500); color:#fff; }
+  .proc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+
+  .tabs { background:var(--op-surface-0); border-bottom:1px solid var(--op-border-subtle); padding:0 20px; display:flex; gap:0; overflow-x:auto; flex-shrink:0; }
+  .tabs.has-feeders { padding:0; flex-direction:column; overflow-x:visible; }
+  .tabs-row { display:flex; gap:0; overflow-x:auto; padding:0 20px; }
+  .tabs-row.feeder-row { background:rgba(82,160,108,0.06); border-top:1px solid var(--op-border-subtle); }
+  .tabs-row-label { font-size:0.600rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--op-text-3); display:flex; align-items:center; padding:0 10px 0 20px; white-space:nowrap; flex-shrink:0; border-right:1px solid var(--op-border-subtle); }
+  .tab { padding:9px 14px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-weight:500; font-size:0.786rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .12s; display:flex; align-items:center; gap:7px; }
+  .tab:hover { color:var(--op-text-1); background:var(--op-surface-1); }
+  .tab.active { color:#fff; border-bottom-color:var(--cmp-hematita-500); }
+  .tab-alarm { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+  /* MAIN */
+  .main { flex:1; overflow-y:auto; padding:14px 20px 20px; }
+
+  /* KPI strip */
+  .kpi-strip { display:grid; grid-template-columns:repeat(4,1fr) 1.6fr; gap:10px; margin-bottom:14px; }
+  .kpi { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-top:3px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:10px 14px; }
+  .kpi-lbl { font-size:0.714rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); margin-bottom:5px; }
+  .kpi-val { font-size:1.7rem; font-weight:300; font-variant-numeric:tabular-nums; line-height:1; color:var(--op-text-1); display:flex; align-items:baseline; gap:4px; }
+  .kpi-unit { font-size:0.786rem; color:var(--op-text-3); }
+  .kpi-sub { font-size:0.714rem; color:var(--op-text-3); margin-top:5px; }
+
+  /* Prominent TBO panel */
+  .kpi-tbo { background:linear-gradient(105deg, var(--cmp-blue-900), var(--op-surface-2)); border:1px solid var(--cmp-blue-600); border-left:4px solid var(--cmp-blue-400); border-radius:var(--radius-2); padding:10px 14px; display:flex; flex-direction:column; }
+  .kpi-tbo.venc { background:linear-gradient(105deg, #3a1411, var(--op-surface-2)); border-color:var(--alarm-critical-border); border-left-color:var(--alarm-critical); }
+  .kpi-tbo-top { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:6px; }
+  .kpi-tbo-lbl { font-size:0.714rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--cmp-blue-200); display:flex; align-items:center; gap:5px; }
+  .kpi-tbo.venc .kpi-tbo-lbl { color:var(--alarm-critical-light); }
+  .tbo-edit { padding:3px 10px; font-size:0.714rem; font-weight:500; background:rgba(255,255,255,0.07); border:1px solid var(--cmp-blue-600); color:var(--cmp-blue-200); border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); transition:all .12s; flex-shrink:0; display:flex; align-items:center; gap:4px; }
+  .tbo-edit:hover { background:var(--cmp-blue-700); color:#fff; border-color:var(--cmp-blue-400); }
+  .kpi-tbo.venc .tbo-edit { border-color:var(--alarm-critical-border); color:var(--alarm-critical-light); }
+  .kpi-tbo.venc .tbo-edit:hover { background:var(--alarm-critical-bg); }
+  .kpi-tbo-date { font-size:1.9rem; font-weight:400; font-variant-numeric:tabular-nums; line-height:1.05; color:#fff; display:flex; align-items:center; gap:8px; letter-spacing:.01em; }
+  .kpi-tbo.venc .kpi-tbo-date { color:var(--alarm-critical-light); }
+  .tbo-flag { color:var(--alarm-critical); }
+  .kpi-tbo-sub { font-size:0.786rem; color:var(--cmp-blue-300); margin-top:5px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .kpi-tbo.venc .kpi-tbo-sub { color:var(--alarm-critical-light); font-weight:500; }
+  .kpi-tbo-edited { font-size:0.667rem; color:var(--cmp-hematita-300); border:1px solid var(--cmp-hematita-700); padding:0 5px; border-radius:var(--radius-1); }
+
+  /* Belt header */
+  .belt-hdr { background:var(--op-surface-2); border:1px solid var(--op-border-subtle); border-left:3px solid var(--cmp-blue-500); border-radius:var(--radius-2); padding:9px 14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  .belt-name { font-size:1rem; font-weight:500; color:var(--op-text-1); }
+  .belt-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .belt-chip { font-size:0.714rem; font-family:var(--font-mono); color:var(--op-text-2); background:var(--op-surface-3); border:1px solid var(--op-border-subtle); padding:2px 8px; border-radius:var(--radius-1); }
+
+  /* Diagram */
+  .diagram-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:14px; margin-bottom:12px; overflow-x:auto; }
+  .diagram-svg { width:100%; display:block; min-height:110px; }
+
+  /* Pulley grid */
+  .polea-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(232px, 1fr)); gap:10px; }
+  .polea-card { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-left:3px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:11px 12px; display:flex; flex-direction:column; gap:0; transition:border-color .12s; position:relative; }
+  .polea-card:hover { border-color:var(--op-border-strong); }
+  .pc-top { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+  .pc-num { font-size:0.714rem; font-family:var(--font-mono); color:var(--op-text-3); letter-spacing:.04em; }
+  .pc-top-right { display:flex; flex-direction:column; align-items:flex-end; gap:3px; }
+  .pc-status { font-size:0.714rem; font-weight:600; display:flex; align-items:center; gap:4px; }
+  .pc-type { font-size:0.929rem; font-weight:500; color:var(--op-text-1); margin:5px 0 2px; line-height:1.25; }
+  .pc-dias { display:flex; align-items:baseline; gap:5px; margin:6px 0 4px; }
+  .pc-dias-val { font-size:1.55rem; font-weight:300; font-variant-numeric:tabular-nums; line-height:1; }
+  .pc-dias-unit { font-size:0.714rem; color:var(--op-text-3); }
+  .pc-row { font-size:0.786rem; color:var(--op-text-2); display:flex; gap:6px; margin-top:2px; }
+  .pc-row .k { color:var(--op-text-3); }
+  .pc-codes { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .pc-code { font-size:0.714rem; font-family:var(--font-mono); color:var(--op-text-2); background:var(--op-surface-2); border:1px solid var(--op-border-subtle); padding:1px 6px; border-radius:var(--radius-1); }
+  .pc-desc { font-size:0.714rem; color:var(--op-text-3); margin-top:7px; padding-top:7px; border-top:1px solid var(--op-border-subtle); line-height:1.4; }
+  .pc-moncon { font-size:0.714rem; color:var(--alarm-diag-light); margin-top:7px; padding:5px 7px; background:var(--alarm-diag-bg); border:1px solid var(--alarm-diag-border); border-radius:var(--radius-1); line-height:1.5; }
+  .pc-moncon .k { color:var(--op-text-3); text-transform:uppercase; letter-spacing:.04em; font-size:0.667rem; display:block; margin-bottom:2px; }
+  .pc-edit { margin-top:9px; padding:5px 10px; font-size:0.714rem; font-weight:500; background:var(--op-surface-2); border:1px solid var(--op-border-subtle); color:var(--op-text-2); border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); transition:all .12s; display:flex; align-items:center; gap:5px; justify-content:center; }
+  .pc-edit:hover { border-color:var(--cmp-blue-500); color:var(--cmp-blue-300); background:var(--cmp-blue-900); }
+  .pc-edit:disabled { opacity:.45; cursor:not-allowed; }
+  .pc-edit:disabled:hover { border-color:var(--op-border-subtle); color:var(--op-text-2); background:var(--op-surface-2); }
+  .pc-modified { font-size:0.667rem; color:var(--cmp-hematita-400); font-weight:500; white-space:nowrap; }
+
+  /* Legend */
+  .legend { display:flex; gap:18px; padding:10px 0 0; font-size:0.714rem; color:var(--op-text-3); flex-wrap:wrap; align-items:center; }
+  .legend-item { display:flex; align-items:center; gap:5px; }
+
+  /* MODAL */
+  .modal-bg { position:fixed; inset:0; background:rgba(15,24,40,0.7); display:flex; align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(2px); }
+  .modal { background:var(--op-surface-2); border:1px solid var(--op-border-strong); border-radius:var(--radius-3); width:440px; max-width:92vw; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.5); }
+  .modal.wide { width:760px; }
+  .modal-hdr { background:var(--id-bg); border-bottom:2px solid var(--cmp-hematita-600); padding:12px 18px; display:flex; align-items:center; justify-content:space-between; }
+  .modal-title { font-size:0.929rem; font-weight:600; color:#fff; }
+  .modal-sub { font-size:0.714rem; color:var(--cmp-blue-300); margin-top:1px; }
+  .modal-close { background:transparent; border:none; color:var(--cmp-blue-300); font-size:1.2rem; cursor:pointer; line-height:1; padding:0 4px; }
+  .modal-close:hover { color:#fff; }
+  .modal-body { padding:18px; display:flex; flex-direction:column; gap:14px; }
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .field-lbl { font-size:0.714rem; font-weight:500; letter-spacing:.05em; text-transform:uppercase; color:var(--op-text-3); }
+  .field-input { background:var(--op-bg); border:1px solid var(--op-border-strong); border-radius:var(--radius-1); padding:8px 10px; font-family:var(--font-sans); font-size:0.929rem; color:var(--op-text-1); }
+  .field-input:focus { outline:none; border-color:var(--cmp-blue-400); }
+  .field-input.mono { font-family:var(--font-mono); }
+  input[type=date].field-input { font-variant-numeric:tabular-nums; color-scheme:dark; }
+  .field-hint { font-size:0.714rem; color:var(--op-text-3); }
+  .field-hint.live { color:var(--cmp-blue-300); }
+  .modal-foot { padding:14px 18px; border-top:1px solid var(--op-border-subtle); display:flex; gap:8px; align-items:center; }
+  .btn { padding:8px 16px; font-size:0.857rem; font-weight:500; border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); border:1px solid transparent; transition:all .12s; }
+  .btn-primary { background:var(--cmp-blue-600); color:#fff; border-color:var(--cmp-blue-500); }
+  .btn-primary:hover { background:var(--cmp-blue-500); }
+  .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+  .btn-ghost { background:transparent; color:var(--op-text-2); border-color:var(--op-border-strong); }
+  .btn-ghost:hover { color:var(--op-text-1); border-color:var(--op-text-3); }
+  .btn-danger { background:transparent; color:var(--alarm-critical-light); border-color:var(--alarm-critical-border); }
+  .btn-danger:hover { background:var(--alarm-critical-bg); }
+
+  /* AUDIT TABLE */
+  .audit-table { width:100%; border-collapse:collapse; font-size:0.786rem; }
+  .audit-table th { text-align:left; padding:7px 10px; font-size:0.667rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); position:sticky; top:0; background:var(--op-surface-2); }
+  .audit-table td { padding:7px 10px; border-bottom:1px solid var(--op-border-subtle); color:var(--op-text-2); vertical-align:top; }
+  .audit-ts { font-family:var(--font-mono); font-size:0.714rem; color:var(--op-text-3); white-space:nowrap; }
+  .audit-user { color:var(--op-text-1); font-weight:500; white-space:nowrap; }
+  .audit-accion { display:inline-block; font-size:0.667rem; font-weight:600; padding:1px 7px; border-radius:var(--radius-1); white-space:nowrap; }
+  .audit-empty { padding:30px; text-align:center; color:var(--op-text-3); font-size:0.857rem; }
+
+  /* status bar */
+  .statusbar { background:var(--op-surface-1); border-top:1px solid var(--op-border-subtle); padding:0 20px; height:26px; display:flex; align-items:center; gap:18px; flex-shrink:0; }
+  .sb-item { font-size:0.714rem; color:var(--op-text-3); display:flex; align-items:center; gap:4px; }
+  .sb-item a { color:var(--op-text-3); text-decoration:none; }
+  .sb-item a:hover { color:var(--op-text-2); }
+
+  /* LOGIN */
+  .login-bg { position:fixed; inset:0; background:var(--op-bg); display:flex; align-items:center; justify-content:center; padding:20px; }
+  .login-card { width:380px; max-width:94vw; background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-3); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.4); }
+  .login-hdr { background:var(--id-bg); border-bottom:2px solid var(--cmp-hematita-600); padding:20px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+  .login-title { font-size:0.929rem; font-weight:600; color:#fff; text-align:center; }
+  .login-sub { font-size:0.714rem; color:var(--cmp-blue-300); text-align:center; }
+  .login-body { padding:22px; display:flex; flex-direction:column; gap:14px; }
+  .login-err { font-size:0.786rem; color:var(--alarm-critical-light); background:var(--alarm-critical-bg); border:1px solid var(--alarm-critical-border); padding:8px 10px; border-radius:var(--radius-1); }
+  .login-mode { font-size:0.714rem; text-align:center; color:var(--op-text-3); padding:4px 10px 0; line-height:1.5; }
+  .login-mode b { color:var(--alarm-warning); }
+  .loading-bg { position:fixed; inset:0; background:var(--op-bg); display:flex; align-items:center; justify-content:center; color:var(--op-text-3); font-size:0.857rem; }
+
+  /* VISTA TOGGLE (Poleas | Polines) */
+  .vista-toggle { display:flex; gap:0; background:var(--op-surface-3); border:1px solid var(--op-border-subtle); border-radius:var(--radius-1); overflow:hidden; }
+  .vista-btn { padding:5px 16px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-size:0.786rem; font-weight:600; cursor:pointer; transition:all .12s; display:flex; align-items:center; gap:6px; letter-spacing:.03em; }
+  .vista-btn.active { background:var(--cmp-blue-700); color:#fff; }
+  .vista-btn:not(.active):hover { color:var(--op-text-1); background:var(--op-surface-4); }
+  .vista-btn:disabled { opacity:.4; cursor:not-allowed; }
+  .vista-count { font-size:0.667rem; padding:0 5px; border-radius:8px; background:rgba(255,255,255,0.18); }
+
+  /* HEAT MAP */
+  .heat-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:12px 14px; margin-bottom:12px; }
+  .heat-title { font-size:0.857rem; font-weight:500; color:var(--op-text-1); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .heat-scroll { overflow-x:auto; padding-bottom:4px; }
+  .heat-grid { border-collapse:separate; border-spacing:3px; }
+  .resumen-th { padding:5px 8px; font-size:0.667rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--op-text-3); background:var(--op-surface-2); white-space:nowrap; text-align:left; border-bottom:1px solid var(--op-border-subtle); }
+  .resumen-td { padding:4px 8px; font-size:0.786rem; vertical-align:middle; border-bottom:1px solid var(--op-border-subtle); }
+  .heat-grid th.hcol { font-size:0.700rem; font-weight:500; color:var(--op-text-3); font-family:var(--font-mono); writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; height:82px; vertical-align:bottom; padding-bottom:3px; }
+  .heat-grid th.hrow { font-size:0.714rem; font-weight:500; color:var(--op-text-2); text-align:right; padding-right:8px; white-space:nowrap; }
+  .heat-cell { width:30px; height:26px; border-radius:var(--radius-1); text-align:center; font-size:0.714rem; font-variant-numeric:tabular-nums; font-weight:600; border:1px solid transparent; }
+  .heat-cell.tot { background:var(--op-surface-3); color:var(--op-text-1); border-color:var(--op-border-subtle); }
+  .heat-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:9px; border-top:1px solid var(--op-border-subtle); }
+  .heat-li { display:flex; align-items:center; gap:5px; font-size:0.714rem; color:var(--op-text-3); }
+  .heat-sw { width:11px; height:11px; border-radius:2px; flex-shrink:0; }
+
+  /* Stacked summary bar */
+  .crit-bar { display:flex; height:24px; border-radius:var(--radius-1); overflow:hidden; border:1px solid var(--op-border-subtle); margin-bottom:4px; }
+  .crit-seg { display:flex; align-items:center; justify-content:center; font-size:0.667rem; font-weight:700; color:#fff; min-width:18px; }
+
+  /* Polines table */
+  .pol-table-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); overflow:auto; }
+  .pol-table { width:100%; border-collapse:collapse; font-size:0.786rem; }
+  .pol-table th { text-align:left; padding:7px 10px; font-size:0.667rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); background:var(--op-surface-2); position:sticky; top:0; white-space:nowrap; }
+  .pol-table td { padding:6px 10px; border-bottom:1px solid var(--op-border-subtle); color:var(--op-text-2); vertical-align:top; }
+  .pol-crit { display:inline-flex; align-items:center; gap:4px; font-size:0.714rem; font-weight:600; padding:1px 7px; border-radius:var(--radius-1); white-space:nowrap; }
+  .pol-estado { font-size:0.667rem; font-weight:600; padding:1px 6px; border-radius:var(--radius-1); white-space:nowrap; }
+  .pol-del { background:transparent; border:1px solid var(--op-border-subtle); color:var(--op-text-3); border-radius:var(--radius-1); padding:1px 7px; font-size:0.714rem; cursor:pointer; font-family:var(--font-sans); }
+  .pol-del:hover { color:var(--alarm-critical-light); border-color:var(--alarm-critical-border); background:var(--alarm-critical-bg); }
+  .pol-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .pol-filter { display:flex; gap:2px; }
+  .pol-fbtn { padding:4px 12px; font-size:0.786rem; border:1px solid var(--op-border-subtle); background:var(--op-surface-2); color:var(--op-text-3); border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); }
+  .pol-fbtn.active { background:var(--cmp-blue-700); color:#fff; border-color:var(--cmp-blue-500); }
+</style>
+</head>
+<template id="__bundler_thumbnail">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80">
+  <rect width="120" height="80" fill="#1e2530"/>
+  <rect x="0" y="0" width="120" height="12" fill="#1a3a5c"/>
+  <rect x="8" y="3" width="20" height="6" rx="1" fill="#2563a8"/>
+  <rect x="8" y="18" width="50" height="10" rx="2" fill="#243045"/>
+  <rect x="62" y="18" width="50" height="10" rx="2" fill="#243045"/>
+  <rect x="8" y="32" width="32" height="20" rx="2" fill="#243045"/>
+  <rect x="44" y="32" width="32" height="20" rx="2" fill="#243045"/>
+  <rect x="80" y="32" width="32" height="20" rx="2" fill="#243045"/>
+  <rect x="10" y="34" width="12" height="4" rx="1" fill="#2563a8"/>
+  <rect x="10" y="40" width="20" height="2" rx="1" fill="#3d5a7a"/>
+  <rect x="10" y="44" width="15" height="2" rx="1" fill="#3d5a7a"/>
+  <rect x="46" y="34" width="12" height="4" rx="1" fill="#c0392b"/>
+  <rect x="46" y="40" width="20" height="2" rx="1" fill="#3d5a7a"/>
+  <rect x="8" y="56" width="104" height="16" rx="2" fill="#243045"/>
+</svg>
+</template>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ═══════════════════════════════════════════════════════
+   CONFIGURACIÓN SUPABASE
+   Pega aquí los 2 valores de tu proyecto (Settings → API).
+   Si los dejas vacíos, la app corre en MODO DEMO (datos
+   locales en este navegador, sin compartir).
+   ═══════════════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://gjrskjsoylozdwnjwwkr.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_eUmf1bW0JyJW7AvHaU06Cg_tN8-IXQh';   // ← Publishable key (segura para el navegador)
+
+const LIVE = !!(SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase);
+const sb = LIVE ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+/* ── Estado de polea ───────────────────────────────────── */
+const EST = {
+  cambiada: { col:'var(--status-running)', bg:'var(--status-running-bg)', bdr:'var(--status-running-border)', icon:'●', lbl:'CAMBIADA' },
+  nunca:    { col:'var(--alarm-critical)', bg:'var(--alarm-critical-bg)', bdr:'var(--alarm-critical-border)', icon:'▲', lbl:'SIN CAMBIO' },
+};
+
+/* ── Fechas ─────────────────────────────────────────── */
+function parseDMY(s){ if(!s) return null; const [d,m,y]=s.split('-').map(Number); if(!d||!m||!y) return null; return new Date(y,m-1,d); }
+function diasDesde(s){ const dt=parseDMY(s); if(!dt) return null; return Math.max(0, Math.floor((Date.now()-dt.getTime())/86400000)); }
+function dmyToISO(s){ const dt=parseDMY(s); if(!dt) return ''; return dt.toISOString().slice(0,10); }
+function isoToDMY(iso){ if(!iso) return null; const [y,m,d]=iso.split('-'); return `${d}-${m}-${y}`; }
+function fmtDias(n){ if(n==null) return '—'; if(n>=365){ const a=Math.floor(n/365), d=n%365; return `${a}a ${d}d`; } return `${n}d`; }
+function tboVencido(s){ const dt=parseDMY(s); return dt ? dt < new Date() : false; }
+function diasHastaTBO(s){ const dt=parseDMY(s); if(!dt) return null; return Math.ceil((dt.getTime()-Date.now())/86400000); }
+function estadoPolea(fecha){ return fecha ? 'cambiada' : 'nunca'; }
+
+const okey = (proc,tag,num)=>`${proc}|${tag}|${num}`;
+const tkey = (proc,tag)=>`${proc}|${tag}`;
+
+const PROC_META = {
+  MAGNETITA:{ label:'Magnetita', dot:'var(--cmp-blue-400)' },
+  CNN:      { label:'CNN',       dot:'var(--status-running)' },
+  EMBARQUE: { label:'Embarque',  dot:'var(--cmp-hematita-400)' },
+};
+
+/* ═══════════════════════════════════════════════════════
+   CAPA DE DATOS — Supabase (en línea) o localStorage (demo)
+   ═══════════════════════════════════════════════════════ */
+const LS_KEY='cmp_poleas_overrides_v1', LS_TBO='cmp_poleas_tbo_v1', LS_AUDIT='cmp_poleas_audit_v1';
+
+async function dbLoadAll(){
+  if(!LIVE){
+    return {
+      overrides: JSON.parse(localStorage.getItem(LS_KEY)||'{}'),
+      tbo:       JSON.parse(localStorage.getItem(LS_TBO)||'{}'),
+      audit:     JSON.parse(localStorage.getItem(LS_AUDIT)||'[]'),
+    };
+  }
+  const [ov,tb,au] = await Promise.all([
+    sb.from('poleas_overrides').select('*'),
+    sb.from('tbo_overrides').select('*'),
+    sb.from('audit_log').select('*').order('ts',{ascending:false}).limit(500),
+  ]);
+  const overrides={};
+  (ov.data||[]).forEach(r=>{ overrides[okey(r.proc,r.tag,r.num)]={fecha:r.fecha,dias:r.fecha?diasDesde(r.fecha):null,orden:r.orden,aviso:r.aviso,desc:r.descripcion,status:r.fecha?'crit':'none'}; });
+  const tbo={};
+  (tb.data||[]).forEach(r=>{ tbo[tkey(r.proc,r.tag)]=r.fecha; });
+  const audit=(au.data||[]).map(r=>({ts:r.ts,usuario:r.usuario,accion:r.accion,proceso:r.proceso,correa:r.correa,polea:r.polea,detalle:r.detalle}));
+  return {overrides,tbo,audit};
+}
+
+async function dbSaveOverride(proc,tag,num,fields,user){
+  if(!LIVE){
+    const m=JSON.parse(localStorage.getItem(LS_KEY)||'{}');
+    m[okey(proc,tag,num)]=fields; localStorage.setItem(LS_KEY,JSON.stringify(m)); return;
+  }
+  const { error } = await sb.from('poleas_overrides').upsert({
+    proc, tag, num, fecha:fields.fecha, orden:fields.orden, aviso:fields.aviso,
+    descripcion:fields.desc, updated_by:user, updated_at:new Date().toISOString()
+  });
+  if(error) throw error;
+}
+
+async function dbSaveTbo(proc,tag,dmy,user){
+  if(!LIVE){
+    const m=JSON.parse(localStorage.getItem(LS_TBO)||'{}');
+    m[tkey(proc,tag)]=dmy; localStorage.setItem(LS_TBO,JSON.stringify(m)); return;
+  }
+  const { error } = await sb.from('tbo_overrides').upsert({ proc, tag, fecha:dmy, updated_by:user, updated_at:new Date().toISOString() });
+  if(error) throw error;
+}
+
+async function dbResetTbo(proc,tag){
+  if(!LIVE){
+    const m=JSON.parse(localStorage.getItem(LS_TBO)||'{}');
+    delete m[tkey(proc,tag)]; localStorage.setItem(LS_TBO,JSON.stringify(m)); return;
+  }
+  const { error } = await sb.from('tbo_overrides').delete().eq('proc',proc).eq('tag',tag);
+  if(error) throw error;
+}
+
+async function dbAddAudit(entry){
+  if(!LIVE){
+    const a=JSON.parse(localStorage.getItem(LS_AUDIT)||'[]');
+    a.unshift({...entry, ts:new Date().toISOString()});
+    localStorage.setItem(LS_AUDIT,JSON.stringify(a.slice(0,500))); return;
+  }
+  const { error } = await sb.from('audit_log').insert({
+    usuario:entry.usuario, accion:entry.accion, proceso:entry.proceso,
+    correa:entry.correa, polea:entry.polea, detalle:entry.detalle
+  });
+  if(error) throw error;
+}
+
+/* ── Merge data + overrides ───────────────────────────── */
+function mergePolea(proc, tag, p, overrides){
+  const ov = overrides[okey(proc,tag,p.num)];
+  const merged = ov ? { ...p, ...ov } : { ...p };
+  merged._modified = !!ov;
+  merged._dias = diasDesde(merged.fecha);
+  merged._estado = estadoPolea(merged.fecha);
+  return merged;
+}
+
+/* ── Diagram ──────────────────────────────────────────── */
+function Diagram({ correa, poleas }){
+  const diag = correa.diag || [];
+  return (
+    <svg className="diagram-svg" viewBox="0 -18 620 188" xmlns="http://www.w3.org/2000/svg">
+      <line x1="40" y1="75" x2="600" y2="75" stroke="var(--op-border-strong)" strokeWidth="2" opacity="0.5"/>
+      {diag.map((pos,idx)=>{
+        const p=poleas[idx]; if(!p) return null;
+        const e=EST[p._estado];
+        const r = idx===0?18:13;
+        return (
+          <g key={idx}>
+            <circle cx={pos[0]} cy={pos[1]} r={r} fill="none" stroke={e.col} strokeWidth="2.5" opacity="0.85"/>
+            <circle cx={pos[0]} cy={pos[1]} r={r-3} fill={e.col} opacity="0.14"/>
+            <text x={pos[0]} y={pos[1]+4} textAnchor="middle" fontSize="12" fontWeight="600" fill={e.col} fontFamily="IBM Plex Sans">{p.num}</text>
+            {p.fecha && <text x={pos[0]} y={pos[1]-r-5} textAnchor="middle" fontSize="7" fontWeight="600" fill={e.col} fontFamily="IBM Plex Mono">{p.fecha}</text>}
+            {p._dias!=null && <text x={pos[0]} y={pos[1]+r+16} textAnchor="middle" fontSize="7.5" fill="var(--op-text-3)" fontFamily="IBM Plex Sans">{p._dias}d</text>}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ── Pulley card ──────────────────────────────────────── */
+function PoleaCard({ p, onEdit, canEdit }){
+  const e = EST[p._estado];
+  return (
+    <div className="polea-card" style={{borderLeftColor:e.col}}>
+      <div className="pc-top">
+        <span className="pc-num">POLEA N°{p.num}</span>
+        <div className="pc-top-right">
+          <span className="pc-status" style={{color:e.col}}>{e.icon} {e.lbl}</span>
+          {p._modified && <span className="pc-modified">✎ editado</span>}
+        </div>
+      </div>
+      <div className="pc-type">{p.tipo}</div>
+      <div className="pc-dias">
+        <span className="pc-dias-val" style={{color: p._estado==='nunca'?'var(--alarm-critical)':e.col}}>{p._dias!=null?p._dias:'—'}</span>
+        <span className="pc-dias-unit">{p._dias!=null?`días desde el cambio · ${fmtDias(p._dias)}`:'sin fecha registrada'}</span>
+      </div>
+      <div className="pc-row"><span className="k">Último cambio:</span><span style={{fontVariantNumeric:'tabular-nums'}}>{p.fecha||'Sin registro'}</span></div>
+      {(p.orden||p.aviso) && (
+        <div className="pc-codes">
+          {p.orden && <span className="pc-code">OM {p.orden}</span>}
+          {p.aviso && <span className="pc-code">Aviso {p.aviso}</span>}
+        </div>
+      )}
+      {p.desc && <div className="pc-desc">{p.desc}</div>}
+      {p.medicion && (
+        <div className="pc-moncon">
+          <span className="k">■ Última inspección MONCON</span>
+          Fecha {p.medicion}{p.medOM?` · OM ${p.medOM}`:''}{p.medEstado?` · ${p.medEstado}`:''}
+        </div>
+      )}
+      <button className="pc-edit" disabled={!canEdit} title={canEdit?'':'Solo lectura'} onClick={()=>onEdit(p)}>
+        {canEdit?'✎ Actualizar fecha de cambio':'🔒 Solo lectura'}
+      </button>
+    </div>
+  );
+}
+
+/* ── Edit modal ───────────────────────────────────────── */
+function EditModal({ proc, tag, correa, polea, onSave, onClear, onClose, busy }){
+  const [iso,setIso]=useState(dmyToISO(polea.fecha));
+  const [orden,setOrden]=useState(polea.orden||'');
+  const [aviso,setAviso]=useState(polea.aviso||'');
+  const [desc,setDesc]=useState(polea.desc&&polea.desc!=='Sin cambios registrados'?polea.desc:'');
+  const today=new Date().toISOString().slice(0,10);
+  const dmy=isoToDMY(iso);
+  const dias=dmy?diasDesde(dmy):null;
+  const est=dmy?estadoPolea(dmy):'nunca';
+  const e=EST[est];
+
+  function guardar(){
+    onSave({
+      fecha: dmy, dias,
+      orden: orden.trim()||null,
+      aviso: aviso.trim()||null,
+      desc: desc.trim()||'Cambio registrado manualmente',
+      status: dmy?'crit':'none',
+    });
+  }
+
+  return (
+    <div className="modal-bg" onMouseDown={(ev)=>{ if(ev.target===ev.currentTarget && !busy) onClose(); }}>
+      <div className="modal">
+        <div className="modal-hdr">
+          <div>
+            <div className="modal-title">Polea N°{polea.num} — {polea.tipo}</div>
+            <div className="modal-sub">{cleanNombre(correa.nombre)} · TAG {tag} · {PROC_META[proc].label}</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label className="field-lbl">Fecha del último cambio</label>
+            <input type="date" className="field-input" value={iso} max={today} onChange={ev=>setIso(ev.target.value)}/>
+            <span className={`field-hint ${dias!=null?'live':''}`}>
+              {dias!=null ? `${e.icon} ${e.lbl} — ${dias} días transcurridos (${fmtDias(dias)})` : 'Sin fecha: la polea quedará como “Sin cambio”.'}
+            </span>
+          </div>
+          <div className="field">
+            <label className="field-lbl">Orden de mantención (OM)</label>
+            <input type="text" className="field-input mono" value={orden} placeholder="Ej. 10888682" onChange={ev=>setOrden(ev.target.value)}/>
+          </div>
+          <div className="field">
+            <label className="field-lbl">N° de aviso</label>
+            <input type="text" className="field-input mono" value={aviso} placeholder="Ej. 14387341" onChange={ev=>setAviso(ev.target.value)}/>
+          </div>
+          <div className="field">
+            <label className="field-lbl">Descripción del trabajo</label>
+            <input type="text" className="field-input" value={desc} placeholder="Ej. Cambio de polea motriz CT-XX" onChange={ev=>setDesc(ev.target.value)}/>
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-primary" disabled={busy} onClick={guardar}>{busy?'Guardando…':'Guardar cambio'}</button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          {polea.fecha && <button className="btn btn-danger" disabled={busy} style={{marginLeft:'auto'}} onClick={onClear}>Limpiar registro</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── TBO edit modal ───────────────────────────────────── */
+function TboModal({ proc, tag, correa, tboEff, hasOverride, onSave, onReset, onClose, busy }){
+  const [iso,setIso]=useState(dmyToISO(tboEff));
+  const dmy=isoToDMY(iso);
+  const venc=dmy?tboVencido(dmy):false;
+  const rest=dmy?diasHastaTBO(dmy):null;
+  return (
+    <div className="modal-bg" onMouseDown={(ev)=>{ if(ev.target===ev.currentTarget && !busy) onClose(); }}>
+      <div className="modal">
+        <div className="modal-hdr">
+          <div>
+            <div className="modal-title">TBO — Próxima Revisión</div>
+            <div className="modal-sub">{cleanNombre(correa.nombre)} · TAG {tag} · {PROC_META[proc].label}</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          <div className="field">
+            <label className="field-lbl">Fecha de próxima revisión (TBO)</label>
+            <input type="date" className="field-input" value={iso} onChange={ev=>setIso(ev.target.value)}/>
+            <span className={`field-hint ${dmy?'live':''}`}>
+              {dmy==null ? 'Selecciona una fecha válida.'
+                : venc ? `▲ VENCIDO — hace ${Math.abs(rest)} días (${fmtDias(Math.abs(rest))})`
+                : `● Vigente — faltan ${rest} días (${fmtDias(rest)})`}
+            </span>
+          </div>
+          <span className="field-hint">El TBO (Time Between Overhaul) marca cuándo corresponde la próxima revisión mayor de la correa.</span>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-primary" disabled={busy} onClick={()=>dmy&&onSave(dmy)}>{busy?'Guardando…':'Guardar fecha'}</button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+          {hasOverride && <button className="btn btn-danger" disabled={busy} style={{marginLeft:'auto'}} onClick={onReset}>Restaurar original</button>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Historial (auditoría) modal ──────────────────────── */
+const ACCION_COL = {
+  'Editó polea':     {bg:'var(--status-running-bg)', c:'var(--status-running-light)', bd:'var(--status-running-border)'},
+  'Eliminó registro':{bg:'var(--alarm-critical-bg)', c:'var(--alarm-critical-light)', bd:'var(--alarm-critical-border)'},
+  'Editó TBO':       {bg:'var(--cmp-blue-900)',      c:'var(--cmp-blue-200)',          bd:'var(--cmp-blue-700)'},
+  'Restauró TBO':    {bg:'var(--op-surface-3)',      c:'var(--op-text-2)',             bd:'var(--op-border-subtle)'},
+  'Registró polín':  {bg:'rgba(38,77,140,0.18)',     c:'var(--cmp-blue-200)',          bd:'var(--cmp-blue-700)'},
+  'Eliminó polín':   {bg:'var(--alarm-critical-bg)', c:'var(--alarm-critical-light)', bd:'var(--alarm-critical-border)'},
+};
+function HistorialModal({ audit, onClose }){
+  function fmtTs(ts){ try{ return new Date(ts).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}); }catch(e){ return ts; } }
+  return (
+    <div className="modal-bg" onMouseDown={(ev)=>{ if(ev.target===ev.currentTarget) onClose(); }}>
+      <div className="modal wide">
+        <div className="modal-hdr">
+          <div>
+            <div className="modal-title">Historial de Cambios</div>
+            <div className="modal-sub">Registro de auditoría — quién cambió qué y cuándo {LIVE?'· en línea':'· modo demo (local)'}</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div style={{maxHeight:'62vh', overflowY:'auto'}}>
+          {audit.length===0
+            ? <div className="audit-empty">Aún no hay cambios registrados.</div>
+            : (
+              <table className="audit-table">
+                <thead>
+                  <tr><th>Fecha / Hora</th><th>Usuario</th><th>Acción</th><th>Ubicación</th><th>Detalle</th></tr>
+                </thead>
+                <tbody>
+                  {audit.map((a,i)=>{
+                    const ac=ACCION_COL[a.accion]||ACCION_COL['Restauró TBO'];
+                    return (
+                      <tr key={i}>
+                        <td className="audit-ts">{fmtTs(a.ts)}</td>
+                        <td className="audit-user">{a.usuario}</td>
+                        <td><span className="audit-accion" style={{background:ac.bg,color:ac.c,border:`1px solid ${ac.bd}`}}>{a.accion}</span></td>
+                        <td style={{whiteSpace:'nowrap',fontSize:'0.714rem'}}>{PROC_META[a.proceso]?.label||a.proceso}<br/><span style={{color:'var(--op-text-3)'}}>{a.correa}{a.polea?` · N°${a.polea}`:''}</span></td>
+                        <td>{a.detalle}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+        </div>
+        <div className="modal-foot">
+          <span style={{fontSize:'0.714rem',color:'var(--op-text-3)'}}>{audit.length} movimiento{audit.length!==1?'s':''} registrado{audit.length!==1?'s':''}</span>
+          <button className="btn btn-ghost" style={{marginLeft:'auto'}} onClick={onClose}>Cerrar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   POLINES — criticidad, datos y vista (mapa de calor)
+   ═══════════════════════════════════════════════════════ */
+const POLINES = window.POLINES_DATA || {MAGNETITA:{},CNN:{},EMBARQUE:{}};
+
+const CRIT = {
+  'Baja':             { col:'#52A06C', rank:1, icon:'●' },
+  'Media':            { col:'#C8B828', rank:2, icon:'◆' },
+  'Alta':             { col:'#D97C30', rank:3, icon:'▲' },
+  'Muy Alta':         { col:'#D94040', rank:4, icon:'▲' },
+  'Mantención Mayor': { col:'#9B5DE0', rank:5, icon:'■' },
+};
+const CRIT_ORDER = ['Muy Alta','Alta','Media','Baja','Mantención Mayor'];
+function critOf(s){ return CRIT[s] || { col:'var(--op-text-3)', rank:0, icon:'○' }; }
+function critBg(s){ const c=critOf(s); return c.col+'26'; }   // ~15% alpha
+
+/* Limpia nombres de correa: quita el paréntesis tipo "(CT06)" para estandarizar */
+function cleanNombre(s){ return (s==null?'':s).toString().replace(/\s*\([^)]*\)\s*/g,' ').replace(/\s+/g,' ').trim(); }
+/* Etiqueta amigable: los tags FSxxxxx-N (alimentadores) se muestran como "Feeder NN SUB".
+   La familia FS define el subproceso: 23455→MAG · 24491→CNN · 25455→CU */
+const FEED_SUB = { '23455':{ab:'MAG',rank:1}, '24491':{ab:'CNN',rank:2}, '25455':{ab:'CU',rank:3} };
+function beltLabel(tag){
+  const m=String(tag).match(/^FS(\d+)-(\d+)$/);
+  if(m){ const fam=FEED_SUB[m[1]]; const num=String(+m[2]).padStart(2,'0');
+    return { nombre:'Feeder '+num+(fam?' '+fam.ab:''), isFeeder:true, feedRank:(fam?fam.rank:9)*100+(+m[2]) }; }
+  return { nombre:cleanNombre(tag), isFeeder:false, feedRank:0 };
+}
+/* Lista de correas por proceso = unión de poleas + polines (base + importados).
+   Orden: correas primero; los alimentadores (Feeder) van después, agrupados por subproceso. */
+function beltsFor(proc, adds){
+  const out=[]; const seen={};
+  Object.keys(window.POLEAS_DATA[proc]||{}).forEach(t=>{ seen[t]=1; out.push({tag:t, nombre:cleanNombre(window.POLEAS_DATA[proc][t].nombre), hasPoleas:true, hasPolines:!!(POLINES[proc]&&POLINES[proc][t]), isFeeder:false, feedRank:0}); });
+  Object.keys(POLINES[proc]||{}).forEach(t=>{ if(!seen[t]){ seen[t]=1; const L=beltLabel(t); out.push({tag:t, nombre:L.nombre, hasPoleas:false, hasPolines:true, isFeeder:L.isFeeder, feedRank:L.feedRank}); } });
+  (adds||[]).forEach(a=>{ if(a.proc===proc && !seen[a.tag]){ seen[a.tag]=1; const L=beltLabel(a.tag); out.push({tag:a.tag, nombre:L.nombre, hasPoleas:false, hasPolines:true, isFeeder:L.isFeeder, feedRank:L.feedRank}); } });
+  const reg=out.filter(b=>!b.isFeeder);
+  const fee=out.filter(b=>b.isFeeder).sort((a,b)=> a.feedRank-b.feedRank || a.tag.localeCompare(b.tag,'es',{numeric:true}));
+  return [...reg, ...fee];
+}
+
+/* ── Capa de datos polines (hallazgos agregados) ──────── */
+const LS_POL='cmp_polines_adds_v1';
+const pkeyId = (h)=> h.id;
+
+async function dbLoadPolines(){
+  if(!LIVE){ return JSON.parse(localStorage.getItem(LS_POL)||'[]'); }
+  const { data } = await sb.from('polines_hallazgos').select('*').order('created_at',{ascending:false});
+  return (data||[]).map(r=>({ id:'db'+r.id, proc:r.proc, tag:r.tag, fecha:r.fecha, npolin:r.npolin, ident:r.ident, pos:r.pos, cond:r.cond, accion:r.accion, prog:r.prog, crit:r.crit, aviso:r.aviso, estCond:r.est_cond, obs:r.obs, _added:true }));
+}
+async function dbAddPolin(h,user){
+  if(!LIVE){
+    const a=JSON.parse(localStorage.getItem(LS_POL)||'[]');
+    a.unshift({...h, id:'ls'+Date.now()+Math.random().toString(36).slice(2,6), _added:true});
+    localStorage.setItem(LS_POL,JSON.stringify(a)); return;
+  }
+  const { error } = await sb.from('polines_hallazgos').insert({
+    proc:h.proc, tag:h.tag, fecha:h.fecha, npolin:h.npolin, ident:h.ident, pos:h.pos,
+    cond:h.cond, accion:h.accion, prog:h.prog, crit:h.crit, aviso:h.aviso, est_cond:h.estCond, obs:h.obs, created_by:user
+  });
+  if(error) throw error;
+}
+async function dbDelPolin(id){
+  if(!LIVE){
+    const a=JSON.parse(localStorage.getItem(LS_POL)||'[]').filter(x=>x.id!==id);
+    localStorage.setItem(LS_POL,JSON.stringify(a)); return;
+  }
+  const realId=id.replace(/^db/,'');
+  const { error } = await sb.from('polines_hallazgos').delete().eq('id',realId);
+  if(error) throw error;
+}
+/* Actualiza el estado (Activo / No Activo) de un hallazgo existente */
+async function dbUpdatePolinEstCond(id, estCond){
+  if(!LIVE){
+    const a=JSON.parse(localStorage.getItem(LS_POL)||'[]');
+    const i=a.findIndex(x=>x.id===id); if(i>=0){ a[i].estCond=estCond; localStorage.setItem(LS_POL,JSON.stringify(a)); }
+    return;
+  }
+  const realId=id.replace(/^db/,'');
+  const { error } = await sb.from('polines_hallazgos').update({ est_cond: estCond }).eq('id',realId);
+  if(error) throw error;
+}
+async function dbAddPolinesBulk(rows, user){
+  if(!LIVE){
+    const a=JSON.parse(localStorage.getItem(LS_POL)||'[]');
+    const now=Date.now();
+    rows.forEach((h,i)=>a.unshift({...h, id:'ls'+now+'_'+i, _added:true}));
+    localStorage.setItem(LS_POL,JSON.stringify(a)); return;
+  }
+  const payload=rows.map(h=>({ proc:h.proc, tag:h.tag, fecha:h.fecha, npolin:h.npolin, ident:h.ident, pos:h.pos,
+    cond:h.cond, accion:h.accion, prog:h.prog, crit:h.crit, aviso:h.aviso, est_cond:h.estCond, obs:h.obs, created_by:user }));
+  // insertar por lotes de 200 para no exceder límites
+  for(let i=0;i<payload.length;i+=200){
+    const { error } = await sb.from('polines_hallazgos').insert(payload.slice(i,i+200));
+    if(error) throw error;
+  }
+}
+
+/* ── Importador de Excel (mismo formato de planilla CMP) ── */
+function normTxt(s){ return (s==null?'':s).toString().trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').replace(/\s+/g,' ').trim(); }
+function areaToProc(v){ const s=(v==null?'':v).toString().toUpperCase(); if(s.includes('MAGNETITA'))return 'MAGNETITA'; if(s.includes('CNN'))return 'CNN'; if(s.includes('EMBARQUE'))return 'EMBARQUE'; return null; }
+function normCrit(v){ const s=normTxt(v); if(!s)return null; if(s.startsWith('baja'))return 'Baja'; if(s.startsWith('media'))return 'Media'; if(s.startsWith('muy alta'))return 'Muy Alta'; if(s.startsWith('alta'))return 'Alta'; if(s.includes('mant'))return 'Mantención Mayor'; return null; }
+function xlsToDMY(v){ if(v==null||v==='')return null; const pad=n=>String(n).padStart(2,'0'); if(v instanceof Date)return `${pad(v.getDate())}-${pad(v.getMonth()+1)}-${v.getFullYear()}`; if(typeof v==='number'){ const d=new Date(Math.round((v-25569)*86400000)); return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${d.getFullYear()}`; } const s=String(v).trim(); const m=s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/); if(m){ let y=m[3]; if(y.length===2)y='20'+y; return `${pad(+m[1])}-${pad(+m[2])}-${y}`; } return s; }
+/* Identidad de un hallazgo de polín: NO incluye fecha (la fecha de inspección cambia
+   entre planillas para el mismo hallazgo). Se ancla en aviso SAP + posición + condición. */
+function polKey(h){ return [h.proc,h.tag,h.npolin,normTxt(h.ident),normTxt(h.pos),normTxt(h.cond),h.crit,(h.aviso||'').toString().trim()].join('|'); }
+const COLMAP = { fecha:['fecha'], area:['area'], equipo:['equipo'], npolin:['n polin','no polin','npolin'], ident:['identificacion polin','identificacion'], pos:['posicion polin','posicion'], cond:['condicion'], accion:['accion'], prog:['programacion'], crit:['criticidad'], aviso:['n aviso','no aviso','aviso'], estCond:['estado condicion'], estAviso:['estado aviso sap','estado aviso'], obs:['observaciones','observacion'] };
+function parseExcelPolines(aoa){
+  // localizar fila de encabezados (debe contener 'equipo' y 'criticidad')
+  let hdrIdx=-1, colIdx={};
+  for(let r=0;r<Math.min(aoa.length,15);r++){
+    const row=aoa[r]||[]; const map={}; let hits=0;
+    row.forEach((cell,ci)=>{ const n=normTxt(cell); for(const key in COLMAP){ if(COLMAP[key].includes(n)){ map[key]=ci; hits++; } } });
+    if(map.equipo!=null && map.crit!=null){ hdrIdx=r; colIdx=map; break; }
+    if(hits>=4 && hdrIdx<0){ hdrIdx=r; colIdx=map; }
+  }
+  if(hdrIdx<0) return { error:'No se encontraron los encabezados esperados (Equipo, Criticidad, etc.). Verifica que el archivo tenga el mismo formato de la planilla original.' };
+  const get=(row,key)=> colIdx[key]!=null ? row[colIdx[key]] : '';
+  const valid=[], warns=[]; let skipped=0;
+  for(let r=hdrIdx+1;r<aoa.length;r++){
+    const row=aoa[r]||[]; if(row.every(c=>c==null||String(c).trim()===''))continue;
+    const equipo=(get(row,'equipo')||'').toString().trim().toUpperCase();
+    const proc=areaToProc(get(row,'area'));
+    const crit=normCrit(get(row,'crit'));
+    if(!equipo){ skipped++; continue; }
+    if(!proc){ warns.push(`Fila ${r+1}: área no reconocida (“${get(row,'area')}”) — omitida`); skipped++; continue; }
+    if(!crit){ warns.push(`Fila ${r+1}: criticidad no reconocida (“${get(row,'crit')}”) — se usa “Media”`); }
+    valid.push({ proc, tag:equipo, fecha:xlsToDMY(get(row,'fecha')), npolin:(get(row,'npolin')||'').toString().trim()||null,
+      ident:(get(row,'ident')||'').toString().trim()||null, pos:(get(row,'pos')||'').toString().trim()||null,
+      cond:(get(row,'cond')||'').toString().trim()||null, accion:(get(row,'accion')||'').toString().trim()||null,
+      prog:(get(row,'prog')||'').toString().trim()||null, crit:crit||'Media', aviso:(get(row,'aviso')||'').toString().trim()||null,
+      estCond:(get(row,'estCond')||'').toString().trim()||'Activo', obs:(get(row,'obs')||'').toString().trim()||null });
+  }
+  return { valid, warns, skipped };
+}
+
+/* Hallazgos combinados de una correa: baseline (Excel) + agregados.
+   Un registro de BD (extra) supersede a su copia base con la misma identidad (mismo polKey),
+   de modo que un cambio de estado importado (Activo→No Activo) reemplaza al histórico semilla. */
+function hallazgosDe(proc, tag, adds){
+  const base=((POLINES[proc]||{})[tag]||[]).map((h,i)=>({...h, id:`base|${proc}|${tag}|${i}`, _added:false}));
+  const extraAll=adds.filter(a=>a.proc===proc && a.tag===tag);
+  // dedup de registros BD por identidad: conserva el más reciente (adds viene ordenado desc por created_at)
+  const seenExtra=new Set(); const extra=[];
+  extraAll.forEach(h=>{ const k=polKey(h); if(!seenExtra.has(k)){ seenExtra.add(k); extra.push(h); } });
+  const baseVivos=base.filter(h=>!seenExtra.has(polKey({...h,proc,tag})));
+  return [...extra, ...baseVivos];
+}
+function dmyKey(s){ if(!s) return 0; const [d,m,y]=s.split('-').map(Number); return (y*10000)+(m*100)+d; }
+
+/* ── Heat map (criticidad × inspección) ───────────────── */
+function HeatMap({ hallazgos }){
+  // agrupar por fecha
+  const byDate={};
+  hallazgos.forEach(h=>{ const f=h.fecha||'s/f'; (byDate[f]=byDate[f]||[]).push(h); });
+  const fechas=Object.keys(byDate).sort((a,b)=>dmyKey(a)-dmyKey(b));
+  if(fechas.length===0) return null;
+  // max count para escalar opacidad
+  let maxC=1;
+  fechas.forEach(f=>CRIT_ORDER.forEach(c=>{ const n=byDate[f].filter(h=>h.crit===c).length; if(n>maxC)maxC=n; }));
+  return (
+    <div className="heat-wrap">
+      <div className="heat-title">
+        <span>Mapa de calor — criticidad por inspección</span>
+        <span style={{fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:400}}>{fechas.length} inspecciones · más reciente a la derecha →</span>
+      </div>
+      <div className="heat-scroll">
+        <table className="heat-grid">
+          <thead>
+            <tr>
+              <th></th>
+              {fechas.map(f=><th key={f} className="hcol">{f}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {CRIT_ORDER.map(c=>{
+              const cc=critOf(c);
+              const anyInRow=fechas.some(f=>byDate[f].some(h=>h.crit===c));
+              if(!anyInRow) return null;
+              return (
+                <tr key={c}>
+                  <th className="hrow"><span style={{color:cc.col}}>{cc.icon}</span> {c}</th>
+                  {fechas.map(f=>{
+                    const n=byDate[f].filter(h=>h.crit===c).length;
+                    const op=n?(0.22+0.78*(n/maxC)):0;
+                    return <td key={f}><div className="heat-cell" style={{background:n?cc.col:'var(--op-surface-2)', opacity:n?1:.5, color:n?'#fff':'var(--op-text-3)', boxShadow:n?`inset 0 0 0 99px ${cc.col}${Math.round(op*255).toString(16).padStart(2,'0')}`:'none'}}>{n||'·'}</div></td>;
+                  })}
+                </tr>
+              );
+            })}
+            <tr>
+              <th className="hrow" style={{color:'var(--op-text-1)',fontWeight:600}}>Total</th>
+              {fechas.map(f=><td key={f}><div className="heat-cell tot">{byDate[f].length}</div></td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div className="heat-legend">
+        {CRIT_ORDER.map(c=>{ const cc=critOf(c); return <span key={c} className="heat-li"><span className="heat-sw" style={{background:cc.col}}></span>{cc.icon} {c}</span>; })}
+        <span className="heat-li" style={{marginLeft:'auto'}}>Color = criticidad · Intensidad = cantidad de hallazgos</span>
+      </div>
+    </div>
+  );
+}
+
+/* ── Vista de polines completa ────────────────────────── */
+function PolinesView({ proc, tag, beltNombre, hallazgos, canEdit, onAdd, onImport, onDelete }){
+  const [filtro,setFiltro]=useState('todos'); // todos | activos | criticos
+  const total=hallazgos.length;
+  const activos=hallazgos.filter(h=>h.estCond==='Activo').length;
+  const criticos=hallazgos.filter(h=>h.estCond==='Activo'&&['Alta','Muy Alta'].includes(h.crit)).length;
+  const fechas=[...new Set(hallazgos.map(h=>h.fecha).filter(Boolean))].sort((a,b)=>dmyKey(b)-dmyKey(a));
+  const ultima=fechas[0]||'—';
+  // conteo por criticidad
+  const counts={}; CRIT_ORDER.forEach(c=>counts[c]=hallazgos.filter(h=>h.crit===c).length);
+
+  let rows=hallazgos;
+  if(filtro==='activos') rows=rows.filter(h=>h.estCond==='Activo');
+  if(filtro==='criticos') rows=rows.filter(h=>h.estCond==='Activo'&&['Alta','Muy Alta'].includes(h.crit));
+  rows=[...rows].sort((a,b)=>{ const d=dmyKey(b.fecha)-dmyKey(a.fecha); if(d)return d; return critOf(b.crit).rank-critOf(a.crit).rank; });
+
+  return (
+    <>
+      <div className="kpi-strip" style={{gridTemplateColumns:'repeat(4,1fr)'}}>
+        <div className="kpi"><div className="kpi-lbl">Hallazgos Polines</div><div className="kpi-val">{total}</div><div className="kpi-sub">registrados en {beltNombre}</div></div>
+        <div className="kpi" style={{borderTopColor:activos>0?'var(--alarm-major)':'var(--op-border-subtle)'}}><div className="kpi-lbl">Activos (abiertos)</div><div className="kpi-val" style={{color:activos>0?'var(--alarm-major)':'var(--op-text-1)'}}>{activos}</div><div className="kpi-sub">{total-activos} cerrados / no activos</div></div>
+        <div className="kpi" style={{borderTopColor:criticos>0?'var(--alarm-critical)':'var(--op-border-subtle)'}}><div className="kpi-lbl">Criticidad Alta+</div><div className="kpi-val" style={{color:criticos>0?'var(--alarm-critical)':'var(--op-text-1)'}}>{criticos>0?'▲ ':''}{criticos}</div><div className="kpi-sub">Alta · Muy Alta · Mant. Mayor</div></div>
+        <div className="kpi"><div className="kpi-lbl">Última Inspección</div><div className="kpi-val" style={{fontSize:'1.3rem',fontVariantNumeric:'tabular-nums'}}>{ultima}</div><div className="kpi-sub">{fechas.length} inspecciones registradas</div></div>
+      </div>
+
+      <div className="belt-hdr">
+        <span className="belt-name">{beltNombre} — Polines</span>
+        <div className="belt-meta">
+          <span className="belt-chip">TAG {tag}</span>
+          <span className="belt-chip">{total} hallazgos</span>
+          {canEdit && <button className="tbo-edit" style={{borderColor:'var(--cmp-blue-600)'}} onClick={onAdd}>＋ Registrar hallazgo</button>}
+        </div>
+      </div>
+
+      {/* Barra resumen por criticidad */}
+      {total>0 && (
+        <div className="heat-wrap" style={{paddingBottom:10}}>
+          <div className="heat-title"><span>Resumen de criticidad — {beltNombre}</span></div>
+          <div className="crit-bar">
+            {CRIT_ORDER.map(c=>{ const n=counts[c]; if(!n)return null; const cc=critOf(c); return <div key={c} className="crit-seg" style={{background:cc.col, flex:n}} title={`${c}: ${n}`}>{n}</div>; })}
+          </div>
+          <div className="heat-legend" style={{borderTop:'none',paddingTop:6}}>
+            {CRIT_ORDER.map(c=>counts[c]>0 && <span key={c} className="heat-li"><span className="heat-sw" style={{background:critOf(c).col}}></span>{critOf(c).icon} {c}: <b style={{color:'var(--op-text-2)'}}>{counts[c]}</b></span>)}
+          </div>
+        </div>
+      )}
+
+      {/* Mapa de calor por inspección — reacciona al filtro seleccionado */}
+      <HeatMap hallazgos={rows}/>
+
+      {/* Tabla de hallazgos */}
+      <div className="pol-toolbar">
+        <span style={{fontSize:'0.857rem',fontWeight:500,color:'var(--op-text-1)'}}>Histórico Polines</span>
+        <div className="pol-filter">
+          {[['todos','Todos'],['activos','Activos'],['criticos','Críticos']].map(([k,l])=>(
+            <button key={k} className={`pol-fbtn${filtro===k?' active':''}`} onClick={()=>setFiltro(k)}>{l}</button>
+          ))}
+        </div>
+        <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>{rows.length} de {total} hallazgos</span>
+      </div>
+      <div className="pol-table-wrap">
+        <table className="pol-table">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>N°</th><th>Identificación</th><th>Posición</th><th>Condición</th><th>Acción</th><th>Program.</th><th>Criticidad</th><th>Aviso</th><th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(h=>{
+              const cc=critOf(h.crit);
+              const act=h.estCond==='Activo';
+              return (
+                <tr key={h.id} style={h._added?{background:'rgba(38,77,140,0.10)'}:{}}>
+                  <td className="audit-ts">{h.fecha||'—'}{h._added&&<span style={{color:'var(--cmp-blue-300)'}}> ✎</span>}</td>
+                  <td style={{fontFamily:'var(--font-mono)',color:'var(--op-text-3)'}}>{h.npolin||'—'}</td>
+                  <td style={{maxWidth:160}}>{h.ident||'—'}</td>
+                  <td>{h.pos||'—'}</td>
+                  <td style={{maxWidth:150,color:'var(--op-text-1)'}}>{h.cond||'—'}</td>
+                  <td>{h.accion||'—'}</td>
+                  <td style={{whiteSpace:'nowrap'}}>{h.prog||'—'}</td>
+                  <td><span className="pol-crit" style={{color:cc.col,background:critBg(h.crit),border:`1px solid ${cc.col}55`}}>{cc.icon} {h.crit||'—'}</span></td>
+                  <td style={{fontFamily:'var(--font-mono)',fontSize:'0.714rem',color:'var(--op-text-3)'}}>{h.aviso||'—'}</td>
+                  <td><span className="pol-estado" style={act?{color:'var(--alarm-major-light)',background:'var(--alarm-major-bg)',border:'1px solid var(--alarm-major-border)'}:{color:'var(--op-text-3)',background:'var(--op-surface-3)',border:'1px solid var(--op-border-subtle)'}}>{act?'● Activo':'○ No activo'}</span></td>
+                </tr>
+              );
+            })}
+            {rows.length===0 && <tr><td colSpan={canEdit?11:10} style={{textAlign:'center',padding:24,color:'var(--op-text-3)'}}>Sin hallazgos para este filtro.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+/* ── Modal registrar hallazgo de polín ────────────────── */
+function PolinModal({ proc, tag, beltNombre, selectable, polAdds, onSave, onClose, busy }){
+  const today=new Date().toISOString().slice(0,10);
+  const [selProc,setSelProc]=useState(proc||Object.keys(PROC_META)[0]);
+  const beltOpts=useMemo(()=>beltsFor(selProc, polAdds||[]),[selProc, polAdds]);
+  const [selTag,setSelTag]=useState(tag||(beltOpts[0]&&beltOpts[0].tag));
+  useEffect(()=>{ if(selectable && beltOpts.length && !beltOpts.some(b=>b.tag===selTag)) setSelTag(beltOpts[0].tag); },[selProc]);
+  const effProc = selectable ? selProc : proc;
+  const effTag = selectable ? selTag : tag;
+  const effNombre = selectable ? (beltOpts.find(b=>b.tag===selTag)?.nombre||selTag) : beltNombre;
+  const [iso,setIso]=useState(today);
+  const [npolin,setNpolin]=useState('');
+  const [ident,setIdent]=useState('');
+  const [pos,setPos]=useState('Izquierdo');
+  const [cond,setCond]=useState('');
+  const [accion,setAccion]=useState('Cambiar');
+  const [prog,setProg]=useState('2 Semanas');
+  const [crit,setCrit]=useState('Baja');
+  const [aviso,setAviso]=useState('');
+  const [obs,setObs]=useState('');
+  function guardar(){
+    onSave({ proc:effProc, tag:effTag, fecha:isoToDMY(iso), npolin:npolin.trim()||null, ident:ident.trim()||null, pos,
+      cond:cond.trim()||null, accion, prog, crit, aviso:aviso.trim()||null, estCond:'Activo', obs:obs.trim()||null });
+  }
+  const inp=(v,set,ph,mono)=> <input className={`field-input${mono?' mono':''}`} value={v} placeholder={ph} onChange={e=>set(e.target.value)}/>;
+  const sel=(v,set,opts)=> <select className="field-input" value={v} onChange={e=>set(e.target.value)} style={{colorScheme:'dark'}}>{opts.map(o=><option key={o} value={o}>{o}</option>)}</select>;
+  return (
+    <div className="modal-bg" onMouseDown={(ev)=>{ if(ev.target===ev.currentTarget && !busy) onClose(); }}>
+      <div className="modal wide">
+        <div className="modal-hdr">
+          <div>
+            <div className="modal-title">Registrar hallazgo de polín</div>
+            <div className="modal-sub">{selectable ? `${PROC_META[effProc].label} · ${effNombre} · TAG ${effTag}` : `${beltNombre} · TAG ${tag} · ${PROC_META[proc].label}`}</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body" style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+          {selectable && <div className="field"><label className="field-lbl">Proceso</label>{sel(selProc,setSelProc,Object.keys(PROC_META))}<span className="field-hint">{PROC_META[selProc].label}</span></div>}
+          {selectable && <div className="field"><label className="field-lbl">Correa / Feeder</label><select className="field-input" value={selTag} onChange={e=>setSelTag(e.target.value)} style={{colorScheme:'dark'}}>{beltOpts.map(b=><option key={b.tag} value={b.tag}>{b.nombre} — {b.tag}</option>)}</select></div>}
+          <div className="field"><label className="field-lbl">Fecha de inspección</label><input type="date" className="field-input" value={iso} max={today} onChange={e=>setIso(e.target.value)}/></div>
+          <div className="field"><label className="field-lbl">Criticidad</label>{sel(crit,setCrit,['Baja','Media','Alta','Muy Alta','Mantención Mayor'])}<span className="field-hint" style={{color:critOf(crit).col}}>{critOf(crit).icon} {crit}</span></div>
+          <div className="field"><label className="field-lbl">N° Polín</label>{inp(npolin,setNpolin,'Ej. 46',true)}</div>
+          <div className="field"><label className="field-lbl">Posición</label>{sel(pos,setPos,['Izquierdo','Derecho','Centro','Ambos','Retorno','Completo'])}</div>
+          <div className="field" style={{gridColumn:'span 2'}}><label className="field-lbl">Identificación del polín</label>{inp(ident,setIdent,'Ej. Estación retorno autoalineantes')}</div>
+          <div className="field" style={{gridColumn:'span 2'}}><label className="field-lbl">Condición detectada</label>{inp(cond,setCond,'Ej. Rodillo vela gastado')}</div>
+          <div className="field"><label className="field-lbl">Acción</label>{sel(accion,setAccion,['Cambiar','Reponer','Reparar','Monitorear'])}</div>
+          <div className="field"><label className="field-lbl">Programación</label>{sel(prog,setProg,['24 horas','1 Semana','2 Semanas','+ 4 Semanas'])}</div>
+          <div className="field"><label className="field-lbl">N° Aviso SAP</label>{inp(aviso,setAviso,'Ej. 15828535',true)}</div>
+          <div className="field"><label className="field-lbl">Observaciones</label>{inp(obs,setObs,'Opcional')}</div>
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-primary" disabled={busy} onClick={guardar}>{busy?'Guardando…':'Registrar hallazgo'}</button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Modal: importar Excel de polines ─────────────────── */
+function ImportModal({ existing, onImport, onClose, busy }){
+  const [parsed,setParsed]=useState(null);   // {valid,warns,skipped}
+  const [error,setError]=useState('');
+  const [fileName,setFileName]=useState('');
+  const [omitDup,setOmitDup]=useState(true);
+  const [parsing,setParsing]=useState(false);
+  const inputRef=React.useRef(null);
+
+  function handleFile(file){
+    if(!file) return;
+    if(!window.XLSX){ setError('No se pudo cargar el lector de Excel (XLSX). Revisa tu conexión.'); return; }
+    setError(''); setFileName(file.name); setParsing(true); setParsed(null);
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        const res=parseExcelPolines(aoa);
+        if(res.error){ setError(res.error); setParsing(false); return; }
+        // clasificar: nuevo / actualización de estado / duplicado exacto
+        res.valid.forEach(h=>{
+          const ex = existing.get(polKey(h));
+          if(ex){
+            if((ex.estCond||'Activo') === (h.estCond||'Activo')){ h._dup = true; }
+            else if(ex.src==='db'){ h._update = true; h._updateId = ex.id; h._prevEst = ex.estCond||'Activo'; }
+            else { /* base: se inserta fila BD que supersede al histórico semilla */ h._supersede = true; h._prevEst = ex.estCond||'Activo'; }
+          }
+        });
+        setParsed(res); setParsing(false);
+      }catch(e){ setError('No se pudo leer el archivo: '+(e.message||e)); setParsing(false); }
+    };
+    reader.onerror=()=>{ setError('No se pudo leer el archivo.'); setParsing(false); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  const dupCount = parsed ? parsed.valid.filter(h=>h._dup).length : 0;
+  const updateCount = parsed ? parsed.valid.filter(h=>h._update).length : 0;
+  const supersedeCount = parsed ? parsed.valid.filter(h=>h._supersede).length : 0;
+  const estadoChanges = updateCount + supersedeCount;
+  const toImport = parsed ? (omitDup ? parsed.valid.filter(h=>!h._dup && !h._update) : parsed.valid.filter(h=>!h._update)) : [];
+  const nuevosReales = toImport.filter(h=>!h._supersede).length;
+  const updates = parsed ? parsed.valid.filter(h=>h._update).map(h=>({id:h._updateId, estCond:h.estCond||'Activo'})) : [];
+  // breakdown por proceso (solo nuevos reales)
+  const byProc={}; toImport.filter(h=>!h._supersede).forEach(h=>byProc[h.proc]=(byProc[h.proc]||0)+1);
+  const fechas=parsed?[...new Set(parsed.valid.map(h=>h.fecha).filter(Boolean))]:[];
+
+  function confirmar(){
+    const summary=Object.keys(byProc).map(p=>`${PROC_META[p]?.label||p}: ${byProc[p]}`).join(' · ')||'sin nuevos';
+    onImport(toImport, { fileName, summary, fechas, nuevosReales, estadoChanges }, updates);
+  }
+
+  return (
+    <div className="modal-bg" onMouseDown={(e)=>{ if(e.target===e.currentTarget && !busy) onClose(); }}>
+      <div className="modal wide">
+        <div className="modal-hdr">
+          <div>
+            <div className="modal-title">Importar inspección desde Excel</div>
+            <div className="modal-sub">Carga masiva de hallazgos de polines · mismo formato de la planilla CMP</div>
+          </div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        <div className="modal-body">
+          {/* Dropzone / selector */}
+          <div onClick={()=>inputRef.current && inputRef.current.click()}
+            onDragOver={e=>{e.preventDefault();}} onDrop={e=>{e.preventDefault(); handleFile(e.dataTransfer.files[0]);}}
+            style={{border:'1.5px dashed var(--op-border-strong)',borderRadius:'var(--radius-2)',padding:'22px',textAlign:'center',cursor:'pointer',background:'var(--op-bg)'}}>
+            <div style={{fontSize:'1.4rem',marginBottom:6}}>⬆</div>
+            <div style={{fontSize:'0.857rem',color:'var(--op-text-1)',fontWeight:500}}>{fileName||'Haz clic o arrastra aquí tu archivo .xlsx'}</div>
+            <div style={{fontSize:'0.714rem',color:'var(--op-text-3)',marginTop:4}}>Columnas esperadas: Fecha · Área · Equipo · N° Polín · Identificación · Posición · Condición · Acción · Programación · Criticidad · N° Aviso · Estado Condición · Observaciones</div>
+            <input ref={inputRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>handleFile(e.target.files[0])}/>
+          </div>
+
+          {parsing && <div style={{fontSize:'0.857rem',color:'var(--op-text-2)'}}>Leyendo archivo…</div>}
+          {error && <div className="login-err">{error}</div>}
+
+          {parsed && (
+            <>
+              {/* Resumen */}
+              <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+                <div className="kpi" style={{borderTopColor:'var(--cmp-blue-500)'}}><div className="kpi-lbl">Filas válidas</div><div className="kpi-val">{parsed.valid.length}</div></div>
+                <div className="kpi" style={{borderTopColor:'var(--status-running)'}}><div className="kpi-lbl">Nuevos a importar</div><div className="kpi-val" style={{color:'var(--status-running-light)'}}>{nuevosReales}</div></div>
+                <div className="kpi" style={{borderTopColor: estadoChanges>0?'var(--cmp-blue-400)':'var(--op-border-subtle)'}}><div className="kpi-lbl">Cambios de estado</div><div className="kpi-val" style={{color:estadoChanges>0?'var(--cmp-blue-300)':'var(--op-text-1)'}}>{estadoChanges}</div></div>
+                <div className="kpi" style={{borderTopColor: dupCount>0?'var(--alarm-warning)':'var(--op-border-subtle)'}}><div className="kpi-lbl">Duplicados</div><div className="kpi-val" style={{color:dupCount>0?'var(--alarm-warning-light)':'var(--op-text-1)'}}>{dupCount}</div></div>
+                <div className="kpi"><div className="kpi-lbl">Omitidas</div><div className="kpi-val">{parsed.skipped}</div></div>
+              </div>
+              {estadoChanges>0 && <div style={{fontSize:'0.786rem',color:'var(--cmp-blue-300)',background:'rgba(43,111,219,.10)',border:'1px solid rgba(43,111,219,.3)',borderRadius:'var(--radius-1)',padding:'7px 11px'}}>↻ {estadoChanges} hallazgo{estadoChanges!==1?'s':''} existente{estadoChanges!==1?'s':''} cambiará{estadoChanges!==1?'n':''} de estado (ej. Activo → No Activo) y dejará{estadoChanges!==1?'n':''} de aparecer en Críticos Polines.</div>}
+              {/* Por proceso + fechas */}
+              <div style={{display:'flex',gap:16,flexWrap:'wrap',fontSize:'0.786rem',color:'var(--op-text-2)'}}>
+                <div><b style={{color:'var(--op-text-3)',fontSize:'0.667rem',textTransform:'uppercase',letterSpacing:'.05em'}}>Por proceso</b><br/>{Object.keys(byProc).length?Object.keys(byProc).map(p=>`${PROC_META[p]?.label||p}: ${byProc[p]}`).join(' · '):'—'}</div>
+                <div><b style={{color:'var(--op-text-3)',fontSize:'0.667rem',textTransform:'uppercase',letterSpacing:'.05em'}}>Fecha(s) de inspección</b><br/>{fechas.length?fechas.join(' · '):'—'}</div>
+              </div>
+              {/* Opción duplicados */}
+              {dupCount>0 && (
+                <label style={{display:'flex',alignItems:'center',gap:8,fontSize:'0.786rem',color:'var(--op-text-2)',cursor:'pointer'}}>
+                  <input type="checkbox" checked={omitDup} onChange={e=>setOmitDup(e.target.checked)} style={{width:16,height:16}}/>
+                  Omitir {dupCount} hallazgo(s) que ya existen (mismo polín, fecha, condición y criticidad)
+                </label>
+              )}
+              {/* Advertencias */}
+              {parsed.warns.length>0 && (
+                <div style={{maxHeight:120,overflowY:'auto',background:'var(--alarm-warning-bg)',border:'1px solid var(--alarm-warning-border)',borderRadius:'var(--radius-1)',padding:'8px 10px'}}>
+                  <div style={{fontSize:'0.714rem',fontWeight:600,color:'var(--alarm-warning-light)',marginBottom:4}}>⚠ {parsed.warns.length} advertencia(s)</div>
+                  {parsed.warns.slice(0,12).map((w,i)=><div key={i} style={{fontSize:'0.714rem',color:'var(--op-text-2)'}}>{w}</div>)}
+                  {parsed.warns.length>12 && <div style={{fontSize:'0.714rem',color:'var(--op-text-3)'}}>… y {parsed.warns.length-12} más</div>}
+                </div>
+              )}
+              <div style={{fontSize:'0.714rem',color:'var(--op-text-3)'}}>Cada importación se suma como una nueva inspección (queda registrada en el historial y aparece como columna nueva en el mapa de calor). No reemplaza los datos existentes.</div>
+            </>
+          )}
+        </div>
+        <div className="modal-foot">
+          <button className="btn btn-primary" disabled={busy||!parsed||(toImport.length===0&&updates.length===0)} onClick={confirmar}>{busy?'Procesando…':(()=>{ const parts=[]; if(nuevosReales>0)parts.push(`Importar ${nuevosReales}`); if(estadoChanges>0)parts.push(`actualizar ${estadoChanges}`); return parts.length?parts.join(' y '):'Sin cambios'; })()}</button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── LOGIN ────────────────────────────────────────────── */
+function Login({ onDemo }){
+  const [email,setEmail]=useState('');
+  const [pass,setPass]=useState('');
+  const [err,setErr]=useState('');
+  const [busy,setBusy]=useState(false);
+  const [name,setName]=useState('');
+
+  async function entrarLive(){
+    setErr(''); setBusy(true);
+    const { error } = await sb.auth.signInWithPassword({ email:email.trim(), password:pass });
+    setBusy(false);
+    if(error) setErr('No se pudo iniciar sesión: '+(error.message==='Invalid login credentials'?'usuario o contraseña incorrectos.':error.message));
+    // onAuthStateChange (en Root) detecta el login y muestra la app
+  }
+
+  return (
+    <div className="login-bg">
+      <div className="login-card">
+        <div className="login-hdr">
+          <svg viewBox="0 0 220 60" style={{height:'46px'}}>
+            <text x="4" y="37" fontFamily="'Arial Black',Arial,sans-serif" fontSize="32" fontWeight="900" fill="white">CMP</text>
+            <text x="4" y="51" fontFamily="Arial,sans-serif" fontSize="8.5" fill="rgba(255,255,255,0.85)" letterSpacing="1.1">UNA EMPRESA DEL GRUPO CAP</text>
+            <line x1="136" y1="5" x2="136" y2="56" stroke="rgba(255,255,255,0.35)" strokeWidth="1"/>
+            <path d="M185,30 L185,8 A22,22,0,0,1,204,19 Z" fill="#8B95A3"/><path d="M185,30 L204,19 A22,22,0,0,1,204,41 Z" fill="#B52035"/><path d="M185,30 L204,41 A22,22,0,0,1,185,52 Z" fill="#D95F2A"/><path d="M185,30 L185,52 A22,22,0,0,1,166,41 Z" fill="#E8A827"/><path d="M185,30 L166,41 A22,22,0,0,1,166,19 Z" fill="#1A3B8C"/><path d="M185,30 L166,19 A22,22,0,0,1,185,8 Z" fill="#6C7A89"/><circle cx="185" cy="30" r="12.5" fill="white"/><text x="185" y="33.5" fontFamily="Arial,sans-serif" fontSize="8" fontWeight="bold" fill="#111" textAnchor="middle">GRP</text>
+          </svg>
+          <div className="login-title">Gestión de Correas, Poleas y Polines</div>
+          <div className="login-sub">Puerto Punta Totoralillo · Acceso de mantención</div>
+        </div>
+        <div className="login-body">
+          {err && <div className="login-err">{err}</div>}
+          {LIVE ? (
+            <>
+              <div className="field">
+                <label className="field-lbl">Correo</label>
+                <input className="field-input" type="email" value={email} autoFocus placeholder="usuario@cmp.cl" onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==='Enter'&&entrarLive()}/>
+              </div>
+              <div className="field">
+                <label className="field-lbl">Contraseña</label>
+                <input className="field-input" type="password" value={pass} placeholder="••••••••" onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==='Enter'&&entrarLive()}/>
+              </div>
+              <button className="btn btn-primary" disabled={busy||!email||!pass} onClick={entrarLive}>{busy?'Ingresando…':'Iniciar sesión'}</button>
+            </>
+          ) : (
+            <>
+              <div className="field">
+                <label className="field-lbl">Tu nombre (para el historial)</label>
+                <input className="field-input" value={name} autoFocus placeholder="Ej. J. Martínez" onChange={e=>setName(e.target.value)} onKeyDown={e=>e.key==='Enter'&&name.trim()&&onDemo(name.trim())}/>
+              </div>
+              <button className="btn btn-primary" disabled={!name.trim()} onClick={()=>onDemo(name.trim())}>Entrar (modo demo)</button>
+              <div className="login-mode">
+                <b>Modo demo activo.</b> Los datos se guardan solo en este navegador y no se comparten.<br/>
+                Para activar el modo en línea, pega las claves de Supabase en el código.
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Resumen de Críticos Activos ────────────────────────── */
+function ResumenCriticosView({ polAdds, canEdit, onImport, onAddPolin }){
+  const [filtroProc,setFiltroProc]=useState('todos');
+  const [exporting,setExporting]=useState(false);
+
+  function exportExcel(){
+    if(!window.XLSX){ alert('XLSX no disponible'); return; }
+    setExporting(true);
+    try{
+      const wb=XLSX.utils.book_new();
+      // Hoja 1: mapa de calor
+      const heatData=[
+        ['Correa / Feeder','Proceso','Muy Alta','Alta','Total','Última Inspección'],
+        ...heatFiltered.map(r=>[
+          r.nombre,
+          PROC_META[r.proc]?.label||r.proc,
+          r.counts['Muy Alta']||0,
+          r.counts['Alta']||0,
+          Object.values(r.counts).reduce((s,n)=>s+n,0),
+          r.ultima||''
+        ])
+      ];
+      const ws1=XLSX.utils.aoa_to_sheet(heatData);
+      ws1['!cols']=[{wch:32},{wch:18},{wch:12},{wch:10},{wch:10},{wch:16}];
+      XLSX.utils.book_append_sheet(wb,ws1,'Mapa de Calor');
+      // Hoja 2: detalle hallazgos
+      const detData=[
+        ['Correa / Feeder','Proceso','N° Polín','Identificación','Posición','Condición','Acción','Programación','Criticidad','N° Aviso','Fecha'],
+        ...filtered.map(h=>[
+          h.beltNombre,
+          PROC_META[h.proc]?.label||h.proc,
+          h.npolin||'',
+          h.ident||'',
+          h.pos||'',
+          h.cond||'',
+          h.accion||'',
+          h.prog||'',
+          h.crit||'',
+          h.aviso||'',
+          h.fecha||''
+        ])
+      ];
+      const ws2=XLSX.utils.aoa_to_sheet(detData);
+      ws2['!cols']=[{wch:32},{wch:18},{wch:10},{wch:22},{wch:20},{wch:25},{wch:25},{wch:18},{wch:12},{wch:14},{wch:14}];
+      XLSX.utils.book_append_sheet(wb,ws2,'Detalle Hallazgos');
+      const hoy=new Date().toLocaleDateString('es-CL').replace(/\//g,'-');
+      XLSX.writeFile(wb,`Criticos Activos CMP ${hoy}.xlsx`);
+    }catch(e){ alert('Error al exportar: '+e.message); }
+    setExporting(false);
+  }
+
+  function exportPDF(){
+    const hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+    const procLabel=filtroProc==='todos'?'Todos los procesos':PROC_META[filtroProc]?.label||filtroProc;
+    const heatHtml=heatFiltered.map(r=>{
+      const tot=Object.values(r.counts).reduce((s,n)=>s+n,0);
+      return `<tr><td>${r.nombre}</td><td>${PROC_META[r.proc]?.label||r.proc}</td><td style="text-align:center;color:#b91c1c;font-weight:700">${r.counts['Muy Alta']||'—'}</td><td style="text-align:center;color:#c2410c;font-weight:700">${r.counts['Alta']||'—'}</td><td style="text-align:center;font-weight:700">${tot}</td><td>${r.ultima||'—'}</td></tr>`;
+    }).join('');
+    const detHtml=filtered.map((h,i)=>{
+      const cr=critOf(h.crit);
+      return `<tr style="background:${i%2===0?'#f7f7f7':'#fff'}"><td>${h.beltNombre}</td><td>${PROC_META[h.proc]?.label||h.proc}</td><td style="text-align:center">${h.npolin||'—'}</td><td>${h.ident||'—'}</td><td>${h.pos||'—'}</td><td>${h.cond||'—'}</td><td>${h.accion||'—'}</td><td style="color:${cr.col};font-weight:700">${h.crit}</td><td>${h.aviso||'—'}</td><td>${h.fecha||'—'}</td></tr>`;
+    }).join('');
+    const kpiBoxes=Object.keys(PROC_META).map(p=>{
+      const n=allCriticos.filter(h=>h.proc===p).length;
+      return n>0?`<div class="kb"><div class="kn">${n}</div><div class="kl">${PROC_META[p].label}</div></div>`:'';
+    }).join('');
+    const win=window.open('','_blank','width=1100,height=850');
+    if(!win){ alert('Permite las ventanas emergentes para exportar PDF'); return; }
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Reporte Críticos CMP ${hoy}</title>
+    <style>body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:24px;background:#fff}
+    h1{font-size:15px;margin:0 0 3px;color:#071840}h2{font-size:11px;margin:16px 0 5px;color:#071840;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #071840;padding-bottom:3px}
+    .sub{font-size:10px;color:#555;margin-bottom:14px}.kpi-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .kb{border:1px solid #ccc;border-radius:3px;padding:6px 12px;text-align:center;min-width:90px}.kn{font-size:20px;font-weight:700;color:#071840}.kl{font-size:9px;color:#666;margin-top:1px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10px}th{background:#071840;color:#fff;padding:4px 7px;text-align:left;font-size:9px;letter-spacing:.04em}
+    td{padding:3px 7px;border-bottom:1px solid #e5e5e5;vertical-align:middle}.footer{text-align:right;font-size:9px;color:#aaa;margin-top:12px}
+    @media print{body{margin:8px}}</style></head><body>
+    <h1>🔴 Reporte Críticos Activos — Polines CMP</h1>
+    <div class="sub">Proceso: ${procLabel} &nbsp;|&nbsp; Generado: ${hoy} &nbsp;|&nbsp; Total hallazgos: ${filtered.length}</div>
+    <div class="kpi-row"><div class="kb"><div class="kn" style="color:#b91c1c">${total}</div><div class="kl">Críticos activos</div></div><div class="kb"><div class="kn">${heatRows.length}</div><div class="kl">Correas afectadas</div></div>${kpiBoxes}</div>
+    <h2>Mapa de Calor por Correa</h2>
+    <table><thead><tr><th>Correa / Feeder</th><th>Proceso</th><th>Muy Alta</th><th>Alta</th><th>Total</th><th>Últ. Insp.</th></tr></thead><tbody>${heatHtml}</tbody></table>
+    <h2>Detalle de Hallazgos Críticos Activos</h2>
+    <table><thead><tr><th>Correa / Feeder</th><th>Proceso</th><th>N° Polín</th><th>Identificación</th><th>Posición</th><th>Condición</th><th>Acción</th><th>Criticidad</th><th>N° Aviso</th><th>Fecha</th></tr></thead><tbody>${detHtml}</tbody></table>
+    <div class="footer">CMP — Gestión de Correas, Poleas y Polines</div>
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+    win.document.close();
+  }
+
+  const allCriticos=useMemo(()=>{
+    const PAD=window.POLEAS_DATA||{};
+    const all=[];const seen=new Set();
+    const addTag=(proc,tag)=>{
+      const k=proc+'|'+tag;if(seen.has(k))return;seen.add(k);
+      const pd=(PAD[proc]||{})[tag];
+      const nombre=pd?cleanNombre(pd.nombre):beltLabel(tag).nombre;
+      hallazgosDe(proc,tag,polAdds)
+        .filter(h=>h.estCond==='Activo'&&['Alta','Muy Alta','Media'].includes(h.crit))
+        .forEach(h=>all.push({...h,proc,tag,beltNombre:nombre}));
+    };
+    Object.keys(POLINES).forEach(proc=>Object.keys(POLINES[proc]||{}).forEach(tag=>addTag(proc,tag)));
+    polAdds.forEach(h=>addTag(h.proc,h.tag));
+    return all.sort((a,b)=>critOf(b.crit).rank-critOf(a.crit).rank||dmyKey(b.fecha)-dmyKey(a.fecha));
+  },[polAdds]);
+
+  const filtered=filtroProc==='todos'?allCriticos:allCriticos.filter(h=>h.proc===filtroProc);
+
+  const heatRows=useMemo(()=>{
+    const byTag={};
+    allCriticos.forEach(h=>{
+      const k=h.proc+'|'+h.tag;
+      if(!byTag[k])byTag[k]={proc:h.proc,tag:h.tag,nombre:h.beltNombre,counts:{},ultima:null};
+      byTag[k].counts[h.crit]=(byTag[k].counts[h.crit]||0)+1;
+      if(!byTag[k].ultima||dmyKey(h.fecha)>dmyKey(byTag[k].ultima))byTag[k].ultima=h.fecha;
+    });
+    return Object.values(byTag).sort((a,b)=>{
+      const mr=o=>Math.max(0,...Object.keys(o.counts).map(c=>critOf(c).rank));
+      const d=mr(b)-mr(a);if(d)return d;
+      return Object.values(b.counts).reduce((s,n)=>s+n,0)-Object.values(a.counts).reduce((s,n)=>s+n,0);
+    });
+  },[allCriticos]);
+
+  const CRIT_COLS=['Muy Alta','Alta','Media'];
+  const heatFiltered=filtroProc==='todos'?heatRows:heatRows.filter(r=>r.proc===filtroProc);
+  const total=allCriticos.length;
+
+  return (
+    <div style={{flex:1,overflow:'auto',display:'flex',flexDirection:'column',minHeight:0}}>
+
+      {/* Toolbar exportar */}
+      <div style={{padding:'7px 20px',borderBottom:'1px solid var(--op-border-subtle)',display:'flex',alignItems:'center',gap:8,flexShrink:0,background:'var(--op-surface-1)'}}>
+        <span style={{fontSize:'0.786rem',fontWeight:600,color:'var(--op-text-2)',marginRight:4}}>Exportar:</span>
+        <button onClick={exportExcel} disabled={exporting||filtered.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:filtered.length===0?'not-allowed':'pointer',opacity:filtered.length===0?0.5:1}}>
+          ⬇ Excel
+        </button>
+        <button onClick={exportPDF} disabled={filtered.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:filtered.length===0?'not-allowed':'pointer',opacity:filtered.length===0?0.5:1}}>
+          🖨 PDF / Imprimir
+        </button>
+        <button onClick={async()=>{
+          try{
+            const r=await fetch(`${SUPABASE_URL}/functions/v1/enviar-resumen-criticos`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify({test:false})});
+            const d=await r.json();
+            alert(d.ok?'✅ Correo enviado correctamente':'Error: '+(d.error||'desconocido'));
+          }catch(e){ alert('Error de red: '+e.message); }
+        }} disabled={filtered.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:filtered.length===0?'not-allowed':'pointer',opacity:filtered.length===0?0.5:1}}>
+          📧 Enviar correo
+        </button>
+        <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
+          {filtered.length} hallazgo{filtered.length!==1?'s':''}{filtroProc!=='todos'?` · ${PROC_META[filtroProc]?.label}`:''}
+        </span>
+        {canEdit && <span style={{flexShrink:0,width:1,height:18,background:'var(--op-border-subtle)',margin:'0 2px'}}></span>}
+        {canEdit && <button onClick={onImport}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--status-running-border)',color:'var(--status-running-light)',cursor:'pointer'}}>
+          ⬆ Importar Excel
+        </button>}
+      </div>
+
+      {/* KPI strip */}
+      <div className="kpi-strip" style={{flexShrink:0}}>
+        <div className="kpi" style={{borderTopColor:'var(--alarm-critical)'}}>
+          <div className="kpi-lbl">Críticos activos</div>
+          <div className="kpi-val" style={{color:total>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{total}<span className="kpi-unit"> hall.</span></div>
+          <div className="kpi-sub">Muy Alta · Alta · Media</div>
+        </div>
+        {Object.keys(PROC_META).map(p=>{
+          const n=allCriticos.filter(h=>h.proc===p).length;
+          const correas=heatRows.filter(r=>r.proc===p).length;
+          const act=filtroProc===p;
+          return (
+            <div key={p} className="kpi" style={{borderTopColor:PROC_META[p].dot,cursor:'pointer',outline:act?`2px solid ${PROC_META[p].dot}`:''}} onClick={()=>setFiltroProc(act?'todos':p)}>
+              <div className="kpi-lbl">{PROC_META[p].label}</div>
+              <div className="kpi-val" style={{color:n>0?'var(--op-text-1)':'var(--op-text-3)'}}>{n}<span className="kpi-unit"> hall.</span></div>
+              <div className="kpi-sub">{correas} correa{correas!==1?'s':''} afectada{correas!==1?'s':''}</div>
+            </div>
+          );
+        })}
+        <div className="kpi">
+          <div className="kpi-lbl">Correas afectadas</div>
+          <div className="kpi-val">{heatRows.length}</div>
+          <div className="kpi-sub">con críticos activos</div>
+        </div>
+      </div>
+
+      {/* Mapa de calor */}
+      <div style={{padding:'12px 20px',flexShrink:0}}>
+        <div style={{fontSize:'0.714rem',fontWeight:600,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--op-text-3)',marginBottom:8,display:'flex',alignItems:'center',gap:10}}>
+          Mapa de calor — críticos por correa{filtroProc!=='todos'?` (${PROC_META[filtroProc]?.label})`:' (todos los procesos)'}
+          {filtroProc!=='todos'&&<button style={{fontSize:'0.714rem',background:'none',border:'none',color:'var(--cmp-blue-400)',cursor:'pointer',padding:0,fontWeight:400,textTransform:'none',letterSpacing:'normal'}} onClick={()=>setFiltroProc('todos')}>✕ Limpiar filtro</button>}
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{borderCollapse:'separate',borderSpacing:'3px',minWidth:520}}>
+            <thead>
+              <tr>
+                <th style={{textAlign:'left',padding:'3px 10px',fontSize:'0.667rem',fontWeight:600,letterSpacing:'.06em',textTransform:'uppercase',color:'var(--op-text-3)',minWidth:170}}>Correa / Feeder</th>
+                <th style={{textAlign:'left',padding:'3px 8px',fontSize:'0.667rem',fontWeight:600,color:'var(--op-text-3)',minWidth:90}}>Proceso</th>
+                {CRIT_COLS.map(c=>(
+                  <th key={c} style={{textAlign:'center',padding:'3px 8px',fontSize:'0.667rem',fontWeight:600,color:critOf(c).col,minWidth:90}}>{critOf(c).icon} {c}</th>
+                ))}
+                <th style={{textAlign:'center',padding:'3px 8px',fontSize:'0.667rem',fontWeight:600,color:'var(--op-text-3)',minWidth:55}}>Total</th>
+                <th style={{textAlign:'left',padding:'3px 8px',fontSize:'0.667rem',fontWeight:600,color:'var(--op-text-3)',minWidth:90}}>Últ. insp.</th>
+              </tr>
+            </thead>
+            <tbody>
+              {heatFiltered.length===0&&<tr><td colSpan={7} style={{padding:'16px 10px',textAlign:'center',color:'var(--op-text-3)',fontSize:'0.786rem'}}>Sin hallazgos críticos activos</td></tr>}
+              {heatFiltered.map(row=>{
+                const tot=Object.values(row.counts).reduce((s,n)=>s+n,0);
+                const maxCrit=CRIT_COLS.find(c=>row.counts[c]);
+                return (
+                  <tr key={row.proc+'|'+row.tag}>
+                    <td style={{padding:'4px 10px',fontSize:'0.857rem',fontWeight:500,color:'var(--op-text-1)',background:'var(--op-surface-1)',borderRadius:'var(--radius-1) 0 0 var(--radius-1)'}}>{row.nombre}</td>
+                    <td style={{padding:'4px 8px',background:'var(--op-surface-1)'}}>
+                      <span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:'0.714rem',color:'var(--op-text-3)'}}>
+                        <span style={{width:6,height:6,borderRadius:'50%',background:PROC_META[row.proc]?.dot,display:'inline-block',flexShrink:0}}></span>
+                        {PROC_META[row.proc]?.label}
+                      </span>
+                    </td>
+                    {CRIT_COLS.map(c=>{
+                      const n=row.counts[c]||0;
+                      return (
+                        <td key={c} style={{textAlign:'center',padding:'4px 8px',background:'var(--op-surface-1)'}}>
+                          {n>0
+                            ?<span style={{display:'inline-flex',alignItems:'center',justifyContent:'center',minWidth:28,height:22,borderRadius:4,background:critOf(c).col+'26',color:critOf(c).col,fontSize:'0.786rem',fontWeight:700,border:`1px solid ${critOf(c).col}44`,padding:'0 4px'}}>{n}</span>
+                            :<span style={{display:'inline-block',width:28,height:22,borderRadius:4,background:'var(--op-surface-2)'}}></span>
+                          }
+                        </td>
+                      );
+                    })}
+                    <td style={{textAlign:'center',padding:'4px 8px',background:'var(--op-surface-1)'}}>
+                      <span style={{fontWeight:700,color:maxCrit?critOf(maxCrit).col:'var(--op-text-3)',fontSize:'0.857rem'}}>{tot}</span>
+                    </td>
+                    <td style={{padding:'4px 8px',fontSize:'0.714rem',fontFamily:'var(--font-mono)',color:'var(--op-text-3)',background:'var(--op-surface-1)',borderRadius:'0 var(--radius-1) var(--radius-1) 0'}}>{row.ultima||'—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Tabla detalle */}
+      <div style={{padding:'0 20px 20px',flex:1,minHeight:0}}>
+        <div style={{fontSize:'0.714rem',fontWeight:600,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--op-text-3)',marginBottom:8}}>
+          Detalle hallazgos críticos activos
+          <span style={{marginLeft:8,fontWeight:400,textTransform:'none',letterSpacing:'normal',fontSize:'0.714rem',color:'var(--op-text-3)'}}>{filtered.length} hallazgo{filtered.length!==1?'s':''}</span>
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table style={{width:'100%',minWidth:900,borderCollapse:'collapse'}}>
+            <thead>
+              <tr style={{background:'var(--op-surface-2)'}}>
+                {['Correa / Feeder','Proceso','N° Polín','Identificación','Posición','Condición','Acción','Programación','Criticidad','N° Aviso','Fecha'].map(h=>(
+                  <th key={h} className="resumen-th">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length===0&&<tr><td colSpan={11} style={{padding:24,textAlign:'center',color:'var(--op-text-3)',fontSize:'0.857rem'}}>Sin hallazgos críticos activos{filtroProc!=='todos'?` en ${PROC_META[filtroProc]?.label}`:''}</td></tr>}
+              {filtered.map((h,i)=>{
+                const cr=critOf(h.crit);
+                return (
+                  <tr key={i} className="resumen-td" style={{background:i%2===0?'var(--op-surface-1)':'var(--op-surface-0)',borderBottom:'1px solid var(--op-border-subtle)'}}>
+                    <td className="resumen-td" style={{fontWeight:500,whiteSpace:'nowrap'}}>{h.beltNombre}</td>
+                    <td className="resumen-td"><span style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:'0.714rem',color:'var(--op-text-3)'}}><span style={{width:5,height:5,borderRadius:'50%',background:PROC_META[h.proc]?.dot,display:'inline-block'}}></span>{PROC_META[h.proc]?.label}</span></td>
+                    <td className="resumen-td" style={{fontFamily:'var(--font-mono)',textAlign:'center'}}>{h.npolin||'—'}</td>
+                    <td className="resumen-td" style={{color:'var(--op-text-2)'}}>{h.ident||'—'}</td>
+                    <td className="resumen-td" style={{color:'var(--op-text-2)',whiteSpace:'nowrap'}}>{h.pos||'—'}</td>
+                    <td className="resumen-td">{h.cond||'—'}</td>
+                    <td className="resumen-td" style={{color:'var(--op-text-2)',whiteSpace:'nowrap'}}>{h.accion||'—'}</td>
+                    <td className="resumen-td" style={{color:'var(--op-text-3)',whiteSpace:'nowrap'}}>{h.prog||'—'}</td>
+                    <td className="resumen-td" style={{whiteSpace:'nowrap'}}><span style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 7px',borderRadius:3,background:cr.col+'22',color:cr.col,fontSize:'0.714rem',fontWeight:700,border:`1px solid ${cr.col}44`}}>{cr.icon} {h.crit}</span></td>
+                    <td className="resumen-td" style={{fontFamily:'var(--font-mono)',fontSize:'0.714rem',color:'var(--op-text-3)'}}>{h.aviso||'—'}</td>
+                    <td className="resumen-td" style={{fontFamily:'var(--font-mono)',fontSize:'0.714rem',color:'var(--op-text-3)',whiteSpace:'nowrap'}}>{h.fecha||'—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Estado Poleas & TBO (resumen exportable) ──────────── */
+function EstadoPoleasView({ overrides, tboOverrides }){
+  const [filtroProc,setFiltroProc]=useState('todos');
+  const [exporting,setExporting]=useState(false);
+
+  const rows=useMemo(()=>{
+    const out=[];
+    Object.keys(PROC_META).forEach(proc=>{
+      const procData=window.POLEAS_DATA[proc]||{};
+      Object.keys(procData).forEach(tag=>{
+        const c=procData[tag];
+        if(!c||!c.poleas) return;
+        const poleas=c.poleas.map(p=>mergePolea(proc,tag,p,overrides));
+        const total=poleas.length;
+        const sinCambio=poleas.filter(p=>p._estado==='nunca').length;
+        const conCambio=total-sinCambio;
+        const tboEff=tboOverrides[tkey(proc,tag)]||c.tbo;
+        const tboVenc=tboVencido(tboEff);
+        const tboDias=diasHastaTBO(tboEff);
+        const fechasDias=poleas.map(p=>p._dias).filter(d=>d!=null);
+        const ultima=poleas.map(p=>p.fecha).filter(Boolean).sort((a,b)=>parseDMY(b)-parseDMY(a))[0]||null;
+        out.push({proc,tag,nombre:cleanNombre(c.nombre),total,sinCambio,conCambio,tboEff,tboVenc,tboDias,ultima});
+      });
+    });
+    return out;
+  },[overrides,tboOverrides]);
+
+  const filtered=filtroProc==='todos'?rows:rows.filter(r=>r.proc===filtroProc);
+  const sorted=useMemo(()=>[...filtered].sort((a,b)=>{
+    if(a.tboVenc!==b.tboVenc) return a.tboVenc?-1:1;
+    if(b.sinCambio!==a.sinCambio) return b.sinCambio-a.sinCambio;
+    return (a.tboDias??1e9)-(b.tboDias??1e9);
+  }),[filtered]);
+
+  // KPIs
+  const totCorreas=filtered.length;
+  const totPoleas=filtered.reduce((s,r)=>s+r.total,0);
+  const totSinCambio=filtered.reduce((s,r)=>s+r.sinCambio,0);
+  const totConCambio=totPoleas-totSinCambio;
+  const correasSinCambio=filtered.filter(r=>r.sinCambio>0).length;
+  const tboVencidos=filtered.filter(r=>r.tboVenc).length;
+  const tboProximos=filtered.filter(r=>!r.tboVenc && r.tboDias!=null && r.tboDias<=90).length;
+
+  // color helpers
+  function sinCambioCell(n,total){
+    if(n===0) return {bg:'var(--status-running-bg)',col:'var(--status-running-light)',bd:'var(--status-running)'};
+    return {bg:'var(--alarm-critical-bg)',col:'var(--alarm-critical-light)',bd:'var(--alarm-critical)'};
+  }
+  function tboCell(r){
+    if(r.tboVenc) return {bg:'var(--alarm-critical-bg)',col:'var(--alarm-critical-light)',bd:'var(--alarm-critical)',txt:`▲ VENCIDO`};
+    if(r.tboDias!=null && r.tboDias<=90) return {bg:'var(--alarm-warning-bg)',col:'var(--alarm-warning-light)',bd:'var(--alarm-warning)',txt:`◆ ${r.tboDias}d`};
+    return {bg:'var(--status-running-bg)',col:'var(--status-running-light)',bd:'var(--status-running)',txt:r.tboDias!=null?`● ${r.tboDias}d`:'—'};
+  }
+
+  function exportExcel(){
+    if(!window.XLSX){ alert('XLSX no disponible'); return; }
+    setExporting(true);
+    try{
+      const wb=XLSX.utils.book_new();
+      const data=[
+        ['Correa','Proceso','TAG','Total Poleas','Sin Cambio','Cambiadas','TBO Correa','Días para TBO','Estado TBO Correa','Última Fecha Cambio'],
+        ...sorted.map(r=>[
+          r.nombre, PROC_META[r.proc]?.label||r.proc, r.tag,
+          r.total, r.sinCambio, r.conCambio, r.tboEff||'',
+          r.tboDias!=null?r.tboDias:'', r.tboVenc?'VENCIDO':(r.tboDias!=null&&r.tboDias<=90?'Próximo':'OK'),
+          r.ultima||''
+        ])
+      ];
+      const ws=XLSX.utils.aoa_to_sheet(data);
+      ws['!cols']=[{wch:28},{wch:14},{wch:12},{wch:12},{wch:11},{wch:11},{wch:14},{wch:13},{wch:11},{wch:18}];
+      XLSX.utils.book_append_sheet(wb,ws,'Estado Poleas y TBO');
+      const hoy=new Date().toLocaleDateString('es-CL').replace(/\//g,'-');
+      XLSX.writeFile(wb,`Estado Poleas TBO CMP ${hoy}.xlsx`);
+    }catch(e){ alert('Error al exportar: '+e.message); }
+    setExporting(false);
+  }
+
+  function exportPDF(){
+    const hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+    const procLabel=filtroProc==='todos'?'Todos los procesos':PROC_META[filtroProc]?.label||filtroProc;
+    const rowsHtml=sorted.map((r,i)=>{
+      const sc=r.sinCambio>0?'#b91c1c':'#16a34a';
+      const tboTxt=r.tboVenc?'▲ VENCIDO':(r.tboDias!=null&&r.tboDias<=90?`◆ ${r.tboDias}d`:(r.tboDias!=null?`● ${r.tboDias}d`:'—'));
+      const tboCol=r.tboVenc?'#b91c1c':(r.tboDias!=null&&r.tboDias<=90?'#b45309':'#16a34a');
+      return `<tr style="background:${i%2===0?'#f7f7f7':'#fff'}"><td>${r.nombre}</td><td>${PROC_META[r.proc]?.label||r.proc}</td><td>${r.tag}</td><td style="text-align:center">${r.total}</td><td style="text-align:center;color:${sc};font-weight:700">${r.sinCambio}</td><td style="text-align:center;color:#16a34a;font-weight:700">${r.conCambio}</td><td style="text-align:center;font-family:monospace">${r.tboEff||'—'}</td><td style="text-align:center;color:${tboCol};font-weight:700">${tboTxt}</td><td style="text-align:center;font-family:monospace">${r.ultima||'—'}</td></tr>`;
+    }).join('');
+    const win=window.open('','_blank','width=1100,height=850');
+    if(!win){ alert('Permite las ventanas emergentes para exportar PDF'); return; }
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Estado Poleas y TBO CMP ${hoy}</title>
+    <style>body{font-family:Arial,sans-serif;font-size:11px;color:#111;margin:24px;background:#fff}
+    h1{font-size:15px;margin:0 0 3px;color:#071840}h2{font-size:11px;margin:16px 0 5px;color:#071840;text-transform:uppercase;letter-spacing:.06em;border-bottom:2px solid #071840;padding-bottom:3px}
+    .sub{font-size:10px;color:#555;margin-bottom:14px}.kpi-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+    .kb{border:1px solid #ccc;border-radius:3px;padding:6px 12px;text-align:center;min-width:90px}.kn{font-size:20px;font-weight:700;color:#071840}.kl{font-size:9px;color:#666;margin-top:1px}
+    table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10px}th{background:#071840;color:#fff;padding:4px 7px;text-align:left;font-size:9px;letter-spacing:.04em}
+    td{padding:3px 7px;border-bottom:1px solid #e5e5e5;vertical-align:middle}.footer{text-align:right;font-size:9px;color:#aaa;margin-top:12px}
+    @media print{body{margin:8px}}</style></head><body>
+    <h1>⚙ Estado de Poleas y TBO de Correas — CMP</h1>
+    <div class="sub">Proceso: ${procLabel} &nbsp;|&nbsp; Generado: ${hoy} &nbsp;|&nbsp; Total correas: ${totCorreas}</div>
+    <div class="kpi-row"><div class="kb"><div class="kn">${totCorreas}</div><div class="kl">Correas</div></div><div class="kb"><div class="kn">${totPoleas}</div><div class="kl">Poleas totales</div></div><div class="kb"><div class="kn" style="color:#16a34a">${totConCambio}</div><div class="kl">Poleas con cambio</div></div><div class="kb"><div class="kn" style="color:${totSinCambio>0?'#b91c1c':'#16a34a'}">${totSinCambio}</div><div class="kl">Poleas sin cambio</div></div><div class="kb"><div class="kn" style="color:${tboVencidos>0?'#b91c1c':'#16a34a'}">${tboVencidos}</div><div class="kl">TBO Correas vencidos</div></div><div class="kb"><div class="kn" style="color:${tboProximos>0?'#b45309':'#16a34a'}">${tboProximos}</div><div class="kl">TBO Correas próximos (≤90d)</div></div></div>
+    <h2>Mapa de Estado por Correa</h2>
+    <table><thead><tr><th>Correa</th><th>Proceso</th><th>TAG</th><th>Total</th><th>Sin Cambio</th><th>Cambiadas</th><th>TBO Correa</th><th>Estado TBO Correa</th><th>Últ. Cambio Polea</th></tr></thead><tbody>${rowsHtml}</tbody></table>
+    <div class="footer">CMP — Gestión de Correas, Poleas y Polines</div>
+    <script>window.onload=function(){window.print();}<\/script></body></html>`);
+    win.document.close();
+  }
+
+  return (
+    <div style={{flex:1,overflow:'auto',display:'flex',flexDirection:'column',minHeight:0}}>
+      {/* Toolbar exportar */}
+      <div style={{padding:'7px 20px',borderBottom:'1px solid var(--op-border-subtle)',display:'flex',alignItems:'center',gap:8,flexShrink:0,background:'var(--op-surface-1)'}}>
+        <span style={{fontSize:'0.786rem',fontWeight:600,color:'var(--op-text-2)',marginRight:4}}>Exportar:</span>
+        <button onClick={exportExcel} disabled={exporting||sorted.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:sorted.length===0?'not-allowed':'pointer',opacity:sorted.length===0?0.5:1}}>
+          ↓ Excel
+        </button>
+        <button onClick={exportPDF} disabled={sorted.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:sorted.length===0?'not-allowed':'pointer',opacity:sorted.length===0?0.5:1}}>
+          🖨 PDF / Imprimir
+        </button>
+        <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
+          {totCorreas} correa{totCorreas!==1?'s':''}{filtroProc!=='todos'?` · ${PROC_META[filtroProc]?.label}`:''}
+        </span>
+      </div>
+
+      {/* KPI strip */}
+      <div className="kpi-strip" style={{flexShrink:0,gridTemplateColumns:'repeat(6,1fr)'}}>
+        <div className="kpi" style={{borderTopColor:'var(--cmp-blue-400)'}}>
+          <div className="kpi-lbl">Correas</div>
+          <div className="kpi-val">{totCorreas}</div>
+          <div className="kpi-sub">en {filtroProc==='todos'?'todos los procesos':PROC_META[filtroProc]?.label}</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:'var(--cmp-blue-400)'}}>
+          <div className="kpi-lbl">Poleas totales</div>
+          <div className="kpi-val">{totPoleas}</div>
+          <div className="kpi-sub">en {totCorreas} correa{totCorreas!==1?'s':''}</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:'var(--status-running)'}}>
+          <div className="kpi-lbl">Poleas con cambio</div>
+          <div className="kpi-val" style={{color:'var(--status-running-light)'}}>{totConCambio}</div>
+          <div className="kpi-sub">con fecha registrada</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:totSinCambio>0?'var(--alarm-critical)':'var(--status-running)'}}>
+          <div className="kpi-lbl">Poleas sin cambio</div>
+          <div className="kpi-val" style={{color:totSinCambio>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{totSinCambio>0?'▲ ':''}{totSinCambio}</div>
+          <div className="kpi-sub">nunca cambiadas</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:tboVencidos>0?'var(--alarm-critical)':'var(--status-running)'}}>
+          <div className="kpi-lbl">TBO Correas vencidos</div>
+          <div className="kpi-val" style={{color:tboVencidos>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{tboVencidos>0?'▲ ':''}{tboVencidos}</div>
+          <div className="kpi-sub">requieren revisión</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:'var(--alarm-warning-light)'}}>
+          <div className="kpi-lbl">TBO Correas próximos</div>
+          <div className="kpi-val" style={{color:tboProximos>0?'var(--alarm-warning-light)':'var(--op-text-1)'}}>{tboProximos}</div>
+          <div className="kpi-sub">≤ 90 días</div>
+        </div>
+      </div>
+
+      {/* filtro por proceso */}
+      <div style={{padding:'10px 20px 0',display:'flex',alignItems:'center',gap:8,flexShrink:0}}>
+        <span style={{fontSize:'0.714rem',fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase',color:'var(--op-text-3)'}}>Filtrar:</span>
+        <button className={`pol-fbtn${filtroProc==='todos'?' active':''}`} onClick={()=>setFiltroProc('todos')} style={{padding:'3px 12px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',border:'1px solid var(--op-border-strong)',background:filtroProc==='todos'?'var(--cmp-blue-600)':'var(--op-surface-2)',color:filtroProc==='todos'?'#fff':'var(--op-text-2)',cursor:'pointer'}}>Todos</button>
+        {Object.keys(PROC_META).map(p=>(
+          <button key={p} onClick={()=>setFiltroProc(p)} style={{display:'inline-flex',alignItems:'center',gap:5,padding:'3px 12px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',border:'1px solid var(--op-border-strong)',background:filtroProc===p?PROC_META[p].dot:'var(--op-surface-2)',color:filtroProc===p?'#fff':'var(--op-text-2)',cursor:'pointer'}}>
+            <span style={{width:7,height:7,borderRadius:'50%',background:filtroProc===p?'#fff':PROC_META[p].dot}}></span>{PROC_META[p].label}
+          </button>
+        ))}
+      </div>
+
+      {/* Mapa de calor / tabla */}
+      <div style={{padding:'12px 20px 24px'}}>
+        <div style={{fontSize:'0.714rem',fontWeight:600,letterSpacing:'.07em',textTransform:'uppercase',color:'var(--op-text-3)',marginBottom:8}}>
+          Mapa de estado — poleas & TBO por correa{filtroProc!=='todos'?` (${PROC_META[filtroProc]?.label})`:' (todos los procesos)'}
+        </div>
+        <div style={{overflowX:'auto'}}>
+          <table className="data-table" style={{width:'100%',borderCollapse:'collapse',fontSize:'0.857rem'}}>
+            <thead>
+              <tr style={{background:'var(--op-surface-2)'}}>
+                <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Correa</th>
+                <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Proceso</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Total Poleas</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--alarm-critical-light)',fontWeight:600}}>▲ Poleas Sin Cambio</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--status-running-light)',fontWeight:600}}>● Poleas Cambiadas</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>TBO Correa</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Estado TBO Correa</th>
+                <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600,whiteSpace:'nowrap'}}>Últ. Cambio Polea</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.length===0&&<tr><td colSpan={8} style={{padding:24,textAlign:'center',color:'var(--op-text-3)'}}>Sin correas con poleas</td></tr>}
+              {sorted.map((r,i)=>{
+                const sc=sinCambioCell(r.sinCambio,r.total);
+                const tc=tboCell(r);
+                const bg=i%2===0?'var(--op-surface-1)':'transparent';
+                return (
+                  <tr key={r.proc+r.tag} style={{background:bg,borderBottom:'1px solid var(--op-border-subtle)'}}>
+                    <td style={{padding:'5px 10px',fontWeight:600,color:'var(--op-text-1)',borderLeft:`3px solid ${r.tboVenc?'var(--alarm-critical)':(r.tboDias!=null&&r.tboDias<=90?'var(--alarm-warning-light)':'var(--status-running)')}`}}>{r.nombre}</td>
+                    <td style={{padding:'5px 10px',color:'var(--op-text-2)'}}>
+                      <span style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:PROC_META[r.proc].dot,marginRight:5,verticalAlign:'middle'}}></span>
+                      <span style={{verticalAlign:'middle'}}>{PROC_META[r.proc].label}</span>
+                    </td>
+                    <td style={{textAlign:'center',padding:'5px 10px',fontVariantNumeric:'tabular-nums',color:'var(--op-text-1)'}}>{r.total}</td>
+                    <td style={{textAlign:'center',padding:'5px 10px'}}>
+                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:sc.bg,color:sc.col,border:`1px solid ${sc.bd}`,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.sinCambio}</span>
+                    </td>
+                    <td style={{textAlign:'center',padding:'5px 10px'}}>
+                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:'var(--status-running-bg)',color:'var(--status-running-light)',border:'1px solid var(--status-running)',fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.conCambio}</span>
+                    </td>
+                    <td style={{textAlign:'center',padding:'5px 10px',fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',color:'var(--op-text-2)'}}>{r.tboEff||'—'}</td>
+                    <td style={{textAlign:'center',padding:'5px 10px'}}>
+                      <span style={{display:'inline-block',padding:'2px 9px',borderRadius:'var(--radius-1)',background:tc.bg,color:tc.col,border:`1px solid ${tc.bd}`,fontWeight:700,fontSize:'0.786rem',whiteSpace:'nowrap'}}>{tc.txt}</span>
+                    </td>
+                    <td style={{padding:'5px 10px',fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',color:'var(--op-text-3)',fontSize:'0.786rem',whiteSpace:'nowrap'}}>{r.ultima||'—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div style={{marginTop:12,display:'flex',gap:18,flexWrap:'wrap',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
+          <span><span style={{color:'var(--status-running)',fontWeight:700}}>●</span> TBO vigente (&gt;90d)</span>
+          <span><span style={{color:'var(--alarm-warning-light)',fontWeight:700}}>◆</span> TBO próximo (≤90d)</span>
+          <span><span style={{color:'var(--alarm-critical-light)',fontWeight:700}}>▲</span> TBO vencido / poleas sin cambio</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── App principal ────────────────────────────────────── */
+function App({ user, onLogout }){
+  const DATA = window.POLEAS_DATA;
+  const canEdit = user.role !== 'viewer';
+  const [proc,setProc]=useState('MAGNETITA');
+  const [tag,setTag]=useState(()=>beltsFor(proc)[0].tag);
+  const [vista,setVista]=useState('poleas');
+  const [overrides,setOverrides]=useState({});
+  const [tboOverrides,setTboOverrides]=useState({});
+  const [polAdds,setPolAdds]=useState([]);
+  const [audit,setAudit]=useState([]);
+  const [loaded,setLoaded]=useState(false);
+  const [editing,setEditing]=useState(null);
+  const [editingTbo,setEditingTbo]=useState(false);
+  const [polAdding,setPolAdding]=useState(false);
+  const [importing,setImporting]=useState(false);
+  const [importResult,setImportResult]=useState(null);
+  const [showHist,setShowHist]=useState(false);
+  const [showResumen,setShowResumen]=useState(false);
+  const [showPoleas,setShowPoleas]=useState(false);
+  const [busy,setBusy]=useState(false);
+  const [clock,setClock]=useState(new Date());
+
+  async function refresh(){
+    try{
+      const r=await dbLoadAll(); setOverrides(r.overrides); setTboOverrides(r.tbo); setAudit(r.audit);
+      const pol=await dbLoadPolines(); setPolAdds(pol);
+      setLoaded(true);
+    }
+    catch(e){ console.error('refresh', e); setLoaded(true); }
+  }
+  useEffect(()=>{ refresh(); },[]);
+  useEffect(()=>{ const t=setInterval(()=>setClock(new Date()),1000); return ()=>clearInterval(t); },[]);
+  // Refresco periódico para ver cambios de otros usuarios (solo en línea)
+  useEffect(()=>{ if(!LIVE) return; const t=setInterval(refresh,20000); return ()=>clearInterval(t); },[]);
+
+  function selectProc(p){ const b=beltsFor(p, polAdds); setProc(p); setTag(b[0].tag); setVista(b[0].hasPoleas?'poleas':'polines'); setShowResumen(false); setShowPoleas(false); }
+
+  const belts = beltsFor(proc, polAdds);
+  const correas = belts.filter(b=>!b.isFeeder);
+  const feeders = belts.filter(b=>b.isFeeder);
+  const beltInfo = belts.find(b=>b.tag===tag) || belts[0];
+  const hasPoleas = beltInfo.hasPoleas;
+  const hasPolines = beltInfo.hasPolines;
+  const correa = hasPoleas ? DATA[proc][tag] : null;
+  const poleas = useMemo(()=> hasPoleas ? correa.poleas.map(p=>mergePolea(proc,tag,p,overrides)) : [], [proc,tag,correa,overrides,hasPoleas]);
+  const polHallazgos = hallazgosDe(proc, tag, polAdds);
+
+  useEffect(()=>{ if(vista==='poleas' && !hasPoleas) setVista('polines'); if(vista==='polines' && !hasPolines) setVista('poleas'); }, [tag,proc]);
+
+  function beltEstadoPeor(t){
+    const c=DATA[proc][t];
+    let red=false;
+    // FS24235 (Apilador CNN): punto siempre rojo — equipo especial, requiere atención visual
+    if(t==='FS24235') return 1;
+    if(c){ const anyNunca=c.poleas.some(p=>mergePolea(proc,t,p,overrides)._estado==='nunca'); const tboT=tboOverrides[tkey(proc,t)]||c.tbo; red=anyNunca||tboVencido(tboT); }
+    const ph=hallazgosDe(proc,t,polAdds);
+    const polCrit=ph.some(h=>h.estCond==='Activo' && ['Alta','Muy Alta','Mantención Mayor'].includes(h.crit));
+    return (red||polCrit)?1:0;
+  }
+  const rankCol=['var(--status-running)','var(--alarm-critical)'];
+
+  const total=poleas.length;
+  const conReg=poleas.filter(p=>p.fecha).length;
+  const sinReg=total-conReg;
+  const diasArr=poleas.filter(p=>p._dias!=null).map(p=>p._dias);
+  const prom=diasArr.length?Math.round(diasArr.reduce((a,b)=>a+b,0)/diasArr.length):null;
+  const masAntigua=diasArr.length?Math.max(...diasArr):null;
+  const alarmCount=poleas.filter(p=>p._estado==='nunca').length;
+  const tboEff = hasPoleas ? (tboOverrides[tkey(proc,tag)] || correa.tbo) : null;
+  const tboHasOverride = hasPoleas && !!tboOverrides[tkey(proc,tag)];
+  const tboVenc = hasPoleas ? tboVencido(tboEff) : false;
+  const tboCount = hasPoleas ? diasHastaTBO(tboEff) : null;
+
+  function openEdit(p){ if(canEdit) setEditing({tag, polea:p}); }
+
+  async function doSave(fields){
+    const pol=editing.polea, t=editing.tag;
+    setBusy(true);
+    const detalle = fields.fecha
+      ? `Fecha de cambio → ${fields.fecha}${fields.orden?` · OM ${fields.orden}`:''}${fields.aviso?` · Aviso ${fields.aviso}`:''}`
+      : `Fecha de cambio quitada (queda sin cambio)`;
+    try{
+      await dbSaveOverride(proc,t,pol.num,fields,user.name);
+      await dbAddAudit({usuario:user.name, accion:'Editó polea', proceso:proc, correa:DATA[proc][t].nombre, polea:pol.num, detalle});
+      await refresh();
+      setEditing(null);
+    }catch(e){ alert('No se pudo guardar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  async function doClear(){
+    const pol=editing.polea, t=editing.tag;
+    setBusy(true);
+    const fields={ fecha:null, dias:null, orden:null, aviso:null, desc:'Sin cambios registrados', status:'none' };
+    try{
+      await dbSaveOverride(proc,t,pol.num,fields,user.name);
+      await dbAddAudit({usuario:user.name, accion:'Eliminó registro', proceso:proc, correa:DATA[proc][t].nombre, polea:pol.num, detalle:'Registro de cambio eliminado'});
+      await refresh();
+      setEditing(null);
+    }catch(e){ alert('No se pudo limpiar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  async function saveTboDate(dmy){
+    setBusy(true);
+    try{
+      await dbSaveTbo(proc,tag,dmy,user.name);
+      await dbAddAudit({usuario:user.name, accion:'Editó TBO', proceso:proc, correa:correa.nombre, polea:null, detalle:`Próxima revisión TBO → ${dmy}`});
+      await refresh();
+      setEditingTbo(false);
+    }catch(e){ alert('No se pudo guardar el TBO: '+(e.message||e)); }
+    setBusy(false);
+  }
+  async function resetTboDate(){
+    setBusy(true);
+    try{
+      await dbResetTbo(proc,tag);
+      await dbAddAudit({usuario:user.name, accion:'Restauró TBO', proceso:proc, correa:correa.nombre, polea:null, detalle:'TBO restaurado al valor original'});
+      await refresh();
+      setEditingTbo(false);
+    }catch(e){ alert('No se pudo restaurar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  async function savePolin(h){
+    setBusy(true);
+    try{
+      await dbAddPolin(h,user.name);
+      const bNom = beltsFor(h.proc, polAdds).find(b=>b.tag===h.tag)?.nombre || h.tag;
+      await dbAddAudit({usuario:user.name, accion:'Registró polín', proceso:h.proc, correa:bNom, polea:null, detalle:`Polín ${h.npolin||''} ${h.pos||''} · ${h.crit} · ${h.cond||''} (${h.fecha})`});
+      await refresh();
+      setPolAdding(false);
+    }catch(e){ alert('No se pudo registrar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  async function delPolin(h){
+    if(!confirm('¿Eliminar este hallazgo de polín registrado?')) return;
+    setBusy(true);
+    try{
+      await dbDelPolin(h.id);
+      await dbAddAudit({usuario:user.name, accion:'Eliminó polín', proceso:proc, correa:beltInfo.nombre, polea:null, detalle:`Hallazgo de polín eliminado (${h.fecha||'s/f'} · ${h.crit})`});
+      await refresh();
+    }catch(e){ alert('No se pudo eliminar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  const existingPolMap = useMemo(()=>{
+    const m=new Map();
+    // BD primero (supersede a la base), luego base semilla
+    polAdds.forEach(h=>{ const k=polKey(h); if(!m.has(k)) m.set(k,{id:h.id, estCond:h.estCond||'Activo', src:'db'}); });
+    Object.keys(POLINES).forEach(pr=>Object.keys(POLINES[pr]||{}).forEach(tg=>(POLINES[pr][tg]||[]).forEach(h=>{ const k=polKey({...h,proc:pr,tag:tg}); if(!m.has(k)) m.set(k,{id:h.id, estCond:h.estCond||'Activo', src:'base'}); })));
+    return m;
+  },[polAdds]);
+  async function doImport(rows, meta, updates){
+    setBusy(true);
+    try{
+      if(rows.length) await dbAddPolinesBulk(rows, user.name);
+      // actualizar estado de hallazgos existentes en BD (Activo → No Activo, etc.)
+      let updated=0;
+      if(updates && updates.length){
+        for(const u of updates){ await dbUpdatePolinEstCond(u.id, u.estCond); updated++; }
+      }
+      const nuevos = meta.nuevosReales!=null ? meta.nuevosReales : rows.length;
+      const cambios = (meta.estadoChanges!=null ? meta.estadoChanges : updated);
+      const detalle=`${nuevos} nuevos${cambios?`, ${cambios} cambios de estado`:''} — ${meta.summary}${meta.fechas&&meta.fechas.length?` · fecha ${meta.fechas.join(', ')}`:''}`;
+      await dbAddAudit({usuario:user.name, accion:'Importó Excel', proceso:'IMPORTACIÓN', correa:meta.fileName, polea:null, detalle});
+      await refresh();
+      setImporting(false);
+      setImportResult({ count: nuevos, updated: cambios, summary: meta.summary });
+    }catch(e){ alert('No se pudo importar: '+(e.message||e)); }
+    setBusy(false);
+  }
+  const timeStr=clock.toTimeString().slice(0,8);
+  const dateStr=clock.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
+
+  return (
+    <div className="app">
+      <header className="navbar">
+        <div className="nb-left">
+          <div className="nb-logo"><svg viewBox="0 0 220 60" style={{height:'40px',width:'auto',display:'block'}}><text x="4" y="37" fontFamily="'Arial Black',Arial,sans-serif" fontSize="32" fontWeight="900" fill="white">CMP</text><text x="4" y="51" fontFamily="Arial,sans-serif" fontSize="8.5" fill="rgba(255,255,255,0.85)" letterSpacing="1.1">UNA EMPRESA DEL GRUPO CAP</text><line x1="136" y1="5" x2="136" y2="56" stroke="rgba(255,255,255,0.35)" strokeWidth="1"/><path d="M185,30 L185,8 A22,22,0,0,1,204,19 Z" fill="#8B95A3"/><path d="M185,30 L204,19 A22,22,0,0,1,204,41 Z" fill="#B52035"/><path d="M185,30 L204,41 A22,22,0,0,1,185,52 Z" fill="#D95F2A"/><path d="M185,30 L185,52 A22,22,0,0,1,166,41 Z" fill="#E8A827"/><path d="M185,30 L166,41 A22,22,0,0,1,166,19 Z" fill="#1A3B8C"/><path d="M185,30 L166,19 A22,22,0,0,1,185,8 Z" fill="#6C7A89"/><circle cx="185" cy="30" r="12.5" fill="white"/><text x="185" y="33.5" fontFamily="Arial,sans-serif" fontSize="8" fontWeight="bold" fill="#111" textAnchor="middle">GRP</text></svg></div>
+          <div className="nb-brand">
+            <span className="nb-name">COMPAÑÍA MINERA DEL PACÍFICO</span>
+            <span className="nb-sub">Gestión de Correas, Poleas y Polines — Puerto Punta Totoralillo</span>
+          </div>
+        </div>
+        <div className="nb-right">
+          <button className="nb-btn" onClick={()=>setShowHist(true)}>≣ Historial</button>
+          <div className="nb-status"><div className="nb-pulse" style={{background:LIVE?'var(--status-running)':'var(--alarm-warning)'}}></div>{LIVE?'En línea':'Modo demo'}</div>
+          <span className="nb-time">{timeStr}</span>
+          <span className="nb-user">{canEdit?'✎':'👁'} {user.name}</span>
+          <button className="nb-btn" onClick={onLogout}>Salir</button>
+        </div>
+      </header>
+
+      <div className="breadcrumb">
+        {(showResumen?['CMP','Puerto Punta Totoralillo','Resumen Críticos Activos']:showPoleas?['CMP','Puerto Punta Totoralillo','Estado Poleas & TBO']:['CMP','Puerto Punta Totoralillo',PROC_META[proc].label,beltInfo.nombre]).map((it,i,arr)=>( 
+          <React.Fragment key={i}>
+            <span className={`bc-item${i===arr.length-1?' active':''}`}>{it}</span>
+            {i<arr.length-1 && <span className="bc-sep">›</span>}
+          </React.Fragment>
+        ))}
+        <div style={{marginLeft:'auto',display:'flex',gap:6}}>
+          {!showResumen && !showPoleas && vista==='poleas' && hasPoleas && tboVenc && <span className="alarm-badge" style={{color:'var(--alarm-critical)',background:'var(--alarm-critical-bg)',border:'1px solid var(--alarm-critical-border)'}}>▲ TBO vencido</span>}
+          {!showResumen && !showPoleas && vista==='poleas' && hasPoleas && alarmCount>0 && <span className="alarm-badge" style={{color:'var(--alarm-critical)',background:'var(--alarm-critical-bg)',border:'1px solid var(--alarm-critical-border)'}}>▲ {alarmCount} sin cambio</span>}
+          {!showResumen && !showPoleas && vista==='poleas' && hasPoleas && !tboVenc && alarmCount===0 && <span className="alarm-badge" style={{color:'var(--status-running)',background:'var(--status-running-bg)',border:'1px solid var(--status-running-border)'}}>● Todas cambiadas</span>}
+          {!showResumen && !showPoleas && vista==='polines' && (function(){ const pc=polHallazgos.filter(h=>h.estCond==='Activo'&&['Alta','Muy Alta','Mantención Mayor'].includes(h.crit)).length; return pc>0 ? <span className="alarm-badge" style={{color:'var(--alarm-critical)',background:'var(--alarm-critical-bg)',border:'1px solid var(--alarm-critical-border)'}}>▲ {pc} polines críticos activos</span> : <span className="alarm-badge" style={{color:'var(--status-running)',background:'var(--status-running-bg)',border:'1px solid var(--status-running-border)'}}>● Sin polines críticos activos</span>; })()}
+        </div>
+      </div>
+
+      <div className="selbar">
+        <span className="sel-label">Proceso</span>
+        {Object.keys(PROC_META).map(p=>(
+          <button key={p} className={`proc-btn${proc===p?' active':''}`} onClick={()=>selectProc(p)}>
+            <span className="proc-dot" style={{background:PROC_META[p].dot}}></span>{PROC_META[p].label}
+          </button>
+        ))}
+        <span style={{flexShrink:0,width:1,height:18,background:'var(--op-border-subtle)',margin:'0 4px'}}></span>
+        <button className={`proc-btn${showResumen?' active':''}`} onClick={()=>{ setShowResumen(v=>!v); setShowPoleas(false); }}
+          style={showResumen?{background:'var(--alarm-critical)',borderColor:'var(--alarm-critical)',color:'#fff'}:{borderColor:'rgba(217,64,64,.5)',color:'var(--alarm-critical-light)'}}>
+          ▲ Críticos Polines
+        </button>
+        <button className={`proc-btn${showPoleas?' active':''}`} onClick={()=>{ setShowPoleas(v=>!v); setShowResumen(false); }}
+          style={showPoleas?{background:'var(--cmp-blue-600)',borderColor:'var(--cmp-blue-600)',color:'#fff'}:{borderColor:'rgba(43,111,219,.5)',color:'var(--cmp-blue-300)'}}>
+          📊 Estado Poleas & TBO
+        </button>
+        <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
+          {!showResumen && !showPoleas && <>{belts.length} correas</> }
+        </span>
+      </div>
+
+      {showResumen
+        ? <ResumenCriticosView polAdds={polAdds} canEdit={canEdit} onImport={()=>setImporting(true)} onAddPolin={()=>setPolAdding(true)}/>
+        : showPoleas
+        ? <EstadoPoleasView overrides={overrides} tboOverrides={tboOverrides}/>
+        : <><div className={`tabs${feeders.length>0?' has-feeders':''}`}>
+        {feeders.length>0 ? (
+          <>
+            <div className="tabs-row">
+              {correas.map(b=>{
+                const worst=beltEstadoPeor(b.tag);
+                return (
+                  <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}>
+                    <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
+                    {b.nombre}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="tabs-row feeder-row">
+              <span className="tabs-row-label">Feeders</span>
+              {feeders.map(b=>{
+                const worst=beltEstadoPeor(b.tag);
+                return (
+                  <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}
+                    style={tag===b.tag?{}:{color:'var(--status-running-light)'}}>
+                    <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
+                    {b.nombre}
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        ) : (
+          correas.map(b=>{
+            const worst=beltEstadoPeor(b.tag);
+            return (
+              <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}>
+                <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
+                {b.nombre}
+              </button>
+            );
+          })
+        )}
+      </div>
+
+      <div className="main">
+        {(hasPoleas && hasPolines) && (
+          <div style={{display:'flex',justifyContent:'flex-end',marginBottom:10}}>
+            <div className="vista-toggle">
+              <button className={`vista-btn${vista==='poleas'?' active':''}`} onClick={()=>setVista('poleas')}>⚙ Poleas <span className="vista-count">{correa.poleas.length}</span></button>
+              <button className={`vista-btn${vista==='polines'?' active':''}`} onClick={()=>setVista('polines')}>▦ Polines <span className="vista-count">{polHallazgos.length}</span></button>
+            </div>
+          </div>
+        )}
+
+        {vista==='poleas' && hasPoleas && (<>
+        <div className="kpi-strip">
+          <div className="kpi"><div className="kpi-lbl">Total Poleas</div><div className="kpi-val">{total}</div><div className="kpi-sub">en {beltInfo.nombre}</div></div>
+          <div className="kpi"><div className="kpi-lbl">Con Registro</div><div className="kpi-val">{conReg}<span className="kpi-unit">/ {total}</span></div><div className="kpi-sub">{sinReg} sin fecha de cambio</div></div>
+          <div className="kpi" style={{borderTopColor: alarmCount>0?'var(--alarm-critical)':'var(--op-border-subtle)'}}>
+            <div className="kpi-lbl">Sin Cambio</div>
+            <div className="kpi-val" style={{color:alarmCount>0?'var(--alarm-critical)':'var(--op-text-1)'}}>{alarmCount>0?'▲ ':''}{alarmCount}</div>
+            <div className="kpi-sub">poleas nunca cambiadas</div>
+          </div>
+          <div className="kpi"><div className="kpi-lbl">Antigüedad Prom.</div><div className="kpi-val">{prom!=null?prom:'—'}<span className="kpi-unit">días</span></div><div className="kpi-sub">{prom!=null?fmtDias(prom):'sin datos'}{masAntigua!=null?` · máx ${fmtDias(masAntigua)}`:''}</div></div>
+          <div className={`kpi-tbo${tboVenc?' venc':''}`}>
+            <div className="kpi-tbo-top">
+              <span className="kpi-tbo-lbl">⏱ TBO · Próxima Revisión</span>
+              {canEdit && <button className="tbo-edit" onClick={()=>setEditingTbo(true)}>✎ Editar fecha</button>}
+            </div>
+            <div className="kpi-tbo-date">{tboVenc&&<span className="tbo-flag">▲</span>}{tboEff}</div>
+            <div className="kpi-tbo-sub">
+              <span>{tboCount==null ? '—'
+                : tboCount<0 ? `VENCIDO hace ${Math.abs(tboCount)} días — requiere revisión`
+                : `Faltan ${tboCount} días · ${fmtDias(tboCount)}`}</span>
+              {tboHasOverride && <span className="kpi-tbo-edited">✎ editado</span>}
+            </div>
+          </div>
+        </div>
+
+        <div className="belt-hdr">
+          <span className="belt-name">{beltInfo.nombre}</span>
+          <div className="belt-meta">
+            <span className="belt-chip">TAG {tag}</span>
+            <span className="belt-chip">{total} poleas</span>
+            <span className="belt-chip" style={tboVenc?{color:'var(--alarm-critical-light)',borderColor:'var(--alarm-critical-border)',background:'var(--alarm-critical-bg)'}:{}}>TBO {tboEff}{tboVenc?' · VENCIDO':''}</span>
+          </div>
+        </div>
+
+        <div className="diagram-wrap">
+          <Diagram correa={correa} poleas={poleas}/>
+        </div>
+
+        <div className="polea-grid">
+          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
+        </div>
+
+        <div className="legend">
+          <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Estado de la polea:</span>
+          <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Cambiada (con fecha registrada)</span>
+          <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>▲</span>Sin cambio (nunca cambiada)</span>
+        </div>
+        </>)}
+
+        {vista==='polines' && hasPolines && (
+          <PolinesView proc={proc} tag={tag} beltNombre={beltInfo.nombre} hallazgos={polHallazgos} canEdit={canEdit} onAdd={()=>setPolAdding(true)} onImport={()=>setImporting(true)} onDelete={delPolin}/>
+        )}
+      </div>
+      </>
+      }
+
+      <div className="statusbar">
+        <span className="sb-item"><span style={{width:6,height:6,borderRadius:'50%',background:LIVE?'var(--status-running)':'var(--alarm-warning)',display:'inline-block'}}></span>{LIVE?'En línea · datos compartidos':'Modo demo · datos locales'}</span>
+        <span className="sb-item">{loaded?`${audit.length} movimientos en historial`:'Cargando…'}</span>
+        <span className="sb-item" style={{marginLeft:'auto'}}>{PROC_META[proc].label} · {beltInfo.nombre} · {dateStr} {timeStr}</span>
+        <span className="sb-item"><a href="index.html">CMP Design System v1.0</a></span>
+      </div>
+
+      {editing && (
+        <EditModal key={okey(proc, editing.tag, editing.polea.num)}
+          proc={proc} tag={editing.tag} correa={DATA[proc][editing.tag]} polea={editing.polea}
+          onSave={doSave} onClear={doClear} onClose={()=>setEditing(null)} busy={busy}/>
+      )}
+      {editingTbo && (
+        <TboModal key={tkey(proc,tag)}
+          proc={proc} tag={tag} correa={correa} tboEff={tboEff} hasOverride={tboHasOverride}
+          onSave={saveTboDate} onReset={resetTboDate} onClose={()=>setEditingTbo(false)} busy={busy}/>
+      )}
+      {showHist && <HistorialModal audit={audit} onClose={()=>setShowHist(false)}/>}
+      {polAdding && (
+        <PolinModal proc={proc} tag={tag} beltNombre={beltInfo.nombre}
+          onSave={savePolin} onClose={()=>setPolAdding(false)} busy={busy}/>
+      )}
+      {importing && (
+        <ImportModal existing={existingPolMap} onImport={doImport} onClose={()=>setImporting(false)} busy={busy}/>
+      )}
+      {importResult && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.55)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center'}}>
+          <div style={{background:'var(--op-surface-1)',border:'1px solid var(--op-border-subtle)',borderRadius:'var(--radius-2)',padding:'28px 32px',maxWidth:420,width:'90%',boxShadow:'0 8px 32px rgba(0,0,0,0.4)'}}>
+            <div style={{fontSize:'2rem',textAlign:'center',marginBottom:8}}>✅</div>
+            <div style={{fontWeight:700,fontSize:'1rem',color:'var(--op-text-1)',textAlign:'center',marginBottom:6}}>Importación completada</div>
+            <div style={{fontSize:'0.857rem',color:'var(--op-text-2)',textAlign:'center',marginBottom:20}}>{importResult.count} hallazgos nuevos{importResult.updated?` · ${importResult.updated} actualizados`:''} · {importResult.summary}</div>
+            <div style={{fontSize:'0.786rem',color:'var(--op-text-3)',textAlign:'center',marginBottom:16}}>¿Deseas enviar ahora el resumen de críticos activos por correo a los responsables?</div>
+            <div style={{display:'flex',gap:10,justifyContent:'center'}}>
+              <button className="btn-primary" style={{display:'flex',alignItems:'center',gap:6}} onClick={async()=>{
+                try{
+                  const r=await fetch(`${SUPABASE_URL}/functions/v1/enviar-resumen-criticos`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify({manual:true})});
+                  const d=await r.json();
+                  alert(d.ok?'✅ Correo enviado correctamente':'Error: '+(d.error||'desconocido'));
+                }catch(e){ alert('Error de red: '+e.message); }
+                setImportResult(null);
+              }}>📧 Enviar resumen por correo</button>
+              <button className="btn-secondary" onClick={()=>setImportResult(null)}>Ahora no</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Root: maneja autenticación ───────────────────────── */
+function Root(){
+  const [session,setSession]=useState(LIVE?undefined:null); // undefined=cargando, null=sin login
+  const [demoUser,setDemoUser]=useState(null);
+
+  useEffect(()=>{
+    if(!LIVE) return;
+    sb.auth.getSession().then(({data})=>setSession(data.session));
+    const { data:sub } = sb.auth.onAuthStateChange((_e,s)=>setSession(s));
+    return ()=>sub.subscription.unsubscribe();
+  },[]);
+
+  if(LIVE){
+    if(session===undefined) return <div className="loading-bg">Conectando…</div>;
+    if(!session) return <Login/>;
+    const u = session.user;
+    const user = { name: (u.user_metadata && u.user_metadata.full_name) || u.email, role: (u.user_metadata && u.user_metadata.role) || 'editor' };
+    return <App user={user} onLogout={()=>sb.auth.signOut()}/>;
+  } else {
+    if(!demoUser) return <Login onDemo={(name)=>setDemoUser({name, role:'editor'})}/>;
+    return <App user={demoUser} onLogout={()=>setDemoUser(null)}/>;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<Root/>);
+</script>
+</body>
+</html>

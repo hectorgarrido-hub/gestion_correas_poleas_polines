@@ -1,0 +1,190 @@
+/* ============================================================
+   CMP DESIGN SYSTEM — SHARED TOKENS
+   ISA-101 High Performance HMI + CMP Brand Identity
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+/* ── RESET ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 15px; }
+
+/* ── BRAND PALETTE: AZUL CMP ─────────────────────────── */
+:root {
+  --cmp-blue-50:  #EEF3FB;
+  --cmp-blue-100: #D4E3F5;
+  --cmp-blue-200: #A9C6EB;
+  --cmp-blue-300: #74A1D9;
+  --cmp-blue-400: #4580C8;
+  --cmp-blue-500: #2362B0;
+  --cmp-blue-600: #184D96;
+  --cmp-blue-700: #113A7A;
+  --cmp-blue-800: #0C295C;
+  --cmp-blue-900: #071840;
+
+  /* BRAND PALETTE: HEMATITA */
+  --cmp-hematita-50:  #FBF1EE;
+  --cmp-hematita-100: #F6DDD4;
+  --cmp-hematita-200: #EDBBAA;
+  --cmp-hematita-300: #E1937A;
+  --cmp-hematita-400: #D26E4E;
+  --cmp-hematita-500: #BF5128;
+  --cmp-hematita-600: #A33D18;
+  --cmp-hematita-700: #852C0E;
+  --cmp-hematita-800: #641E07;
+  --cmp-hematita-900: #421203;
+
+  /* BRAND PALETTE: ARENA ATACAMA */
+  --cmp-arena-50:  #FAFAF8;
+  --cmp-arena-100: #F4F2EC;
+  --cmp-arena-200: #E6E1D7;
+  --cmp-arena-300: #D2CCBF;
+  --cmp-arena-400: #B8B1A2;
+  --cmp-arena-500: #9D9586;
+  --cmp-arena-600: #82796A;
+  --cmp-arena-700: #67604E;
+  --cmp-arena-800: #4C4537;
+  --cmp-arena-900: #312C22;
+
+  /* ── OPERATIONAL LAYER — ISA-101 ─────────────────────── */
+  /* Screen & Surfaces — dark neutral gray, barely-cool cast */
+  --op-bg:          #2B2E33;   /* main screen background      */
+  --op-surface-0:   #2B2E33;   /* same as bg                  */
+  --op-surface-1:   #33363C;   /* cards / panels              */
+  --op-surface-2:   #3B3F46;   /* elevated cards              */
+  --op-surface-3:   #44484F;   /* grouped/selected areas      */
+  --op-surface-4:   #4F5259;   /* hover state                 */
+
+  /* Borders */
+  --op-border-subtle: #44484F;
+  --op-border-strong: #5A5E66;
+
+  /* Text — neutral, no tint in normal state */
+  --op-text-1:    #D8DCE4;  /* primary values / labels    */
+  --op-text-2:    #A4A9B4;  /* secondary labels           */
+  --op-text-3:    #6E7380;  /* muted / disabled           */
+  --op-text-inv:  #1A1C20;  /* text on light backgrounds  */
+
+  /* ── ALARM SEMANTICS — ISA-101 ──────────────────────── */
+  /* CRITICAL (prioridad 1) — rojo */
+  --alarm-critical:        #D94040;
+  --alarm-critical-light:  #E86060;
+  --alarm-critical-bg:     rgba(217, 64, 64, 0.14);
+  --alarm-critical-border: rgba(217, 64, 64, 0.40);
+
+  /* MAJOR (prioridad 2) — naranja */
+  --alarm-major:        #D97C30;
+  --alarm-major-light:  #E89B58;
+  --alarm-major-bg:     rgba(217, 124, 48, 0.12);
+  --alarm-major-border: rgba(217, 124, 48, 0.36);
+
+  /* WARNING (prioridad 3) — amarillo */
+  --alarm-warning:        #C8B828;
+  --alarm-warning-light:  #DDD040;
+  --alarm-warning-bg:     rgba(200, 184, 40, 0.10);
+  --alarm-warning-border: rgba(200, 184, 40, 0.34);
+
+  /* DIAGNOSTIC / OUT OF SERVICE — azul medio */
+  --alarm-diag:        #5882CC;
+  --alarm-diag-light:  #7EA0D8;
+  --alarm-diag-bg:     rgba(88, 130, 204, 0.12);
+  --alarm-diag-border: rgba(88, 130, 204, 0.34);
+
+  /* RUNNING / OK — verde muy atenuado (secundario, nunca único) */
+  --status-running:        #52A06C;
+  --status-running-light:  #72BE8C;
+  --status-running-bg:     rgba(82, 160, 108, 0.12);
+  --status-running-border: rgba(82, 160, 108, 0.34);
+
+  /* ── TYPOGRAPHY ─────────────────────────────────────── */
+  --font-sans:  'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono:  'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Scale */
+  --text-display: 2.571rem;  /* 36px */
+  --text-h1:      1.857rem;  /* 26px */
+  --text-h2:      1.429rem;  /* 20px */
+  --text-h3:      1.143rem;  /* 16px */
+  --text-body:    1rem;      /* 14px */
+  --text-label:   0.857rem;  /* 12px */
+  --text-micro:   0.786rem;  /* 11px */
+
+  /* Data values — larger, tabular */
+  --text-data-xl: 2.571rem;  /* 36px */
+  --text-data-lg: 1.857rem;  /* 26px */
+  --text-data-md: 1.286rem;  /* 18px */
+  --text-data-sm: 1rem;      /* 14px */
+
+  /* ── SPACING (4px base) ─────────────────────────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── RADII — flat/minimal (ISA-101 2D) ─────────────── */
+  --radius-0: 0px;
+  --radius-1: 2px;
+  --radius-2: 4px;
+  --radius-3: 6px;
+
+  /* ── ELEVATION — borders only, no shadows ───────────── */
+  --elev-0: none;
+  --elev-1: inset 0 0 0 1px var(--op-border-subtle);
+  --elev-2: inset 0 0 0 1px var(--op-border-strong);
+
+  /* ── IDENTITY LAYER surfaces (brand) ───────────────── */
+  --id-bg:      var(--cmp-blue-900);  /* navbar / header bg     */
+  --id-accent:  var(--cmp-hematita-500);
+  --id-surface: var(--cmp-blue-800);  /* secondary brand surface */
+
+  /* ── DENSITY ────────────────────────────────────────── */
+  --density-pad-y:   var(--space-3);
+  --density-pad-x:   var(--space-4);
+  --density-row-h:   40px;
+  --density-gap:     var(--space-3);
+  --density-text:    var(--text-body);
+}
+
+/* Compact mode overrides */
+.density-compact {
+  --density-pad-y:  var(--space-2);
+  --density-pad-x:  var(--space-3);
+  --density-row-h:  32px;
+  --density-gap:    var(--space-2);
+  --density-text:   var(--text-label);
+  --text-body:      0.857rem;
+}
+
+/* ── BASE TYPOGRAPHY ────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--op-text-1);
+  background: var(--op-bg);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+}
+
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+.mono    { font-family: var(--font-mono); }
+.label-caps { font-size: var(--text-label); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; color: var(--op-text-2); }
+
+/* ── UTILITY ─────────────────────────────────────────── */
+.text-1  { color: var(--op-text-1); }
+.text-2  { color: var(--op-text-2); }
+.text-3  { color: var(--op-text-3); }
+.critical { color: var(--alarm-critical); }
+.major    { color: var(--alarm-major); }
+.warning  { color: var(--alarm-warning); }
+.running  { color: var(--status-running); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--op-surface-1); }
+::-webkit-scrollbar-thumb { background: var(--op-border-strong); border-radius: 3px; }
