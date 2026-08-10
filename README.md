@@ -28,3 +28,21 @@ cd codigo-fuente
 python3 -m http.server 8000
 # luego abre http://localhost:8000/dashboard.html
 ```
+
+## Diagrama de poleas — mejora visual
+
+El diagrama esquemático de cada correa se rediseñó para que se entienda de un vistazo:
+
+- **Tamaño uniforme.** Antes la polea motriz se dibujaba más grande (r=18 vs r=13),
+  lo que sugería una importancia o criticidad que no existía. Ahora todas las poleas
+  usan el mismo radio.
+- **Símbolo reconocible.** Cada polea es una **rueda** (aro + pernos de brida + número
+  al centro), no un círculo abstracto.
+- **Tipo rotulado.** Bajo cada rueda se indica su tipo (Motriz, Deflectora, Tensora,
+  Cola, Quiebre, Contrapeso, Envolvente).
+- **La motriz se distingue por rol, no por tamaño**, mediante un doble aro y su etiqueta.
+- **La correa se ve como correa:** una banda recorre las poleas en su orden.
+- **Leyenda** que explica el símbolo y los colores (verde = cambiada, rojo = sin cambio).
+
+El diagrama vive en el componente `Diagram` (y el auxiliar `Wheel`), presente tanto en
+`index.html` como en `codigo-fuente/dashboard.html`.

@@ -93,7 +93,7 @@
 
   /* Diagram */
   .diagram-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:14px; margin-bottom:12px; overflow-x:auto; }
-  .diagram-svg { width:100%; display:block; min-height:110px; }
+  .diagram-svg { width:100%; display:block; min-height:124px; }
 
   /* Pulley grid */
   .polea-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(232px, 1fr)); gap:10px; }
@@ -361,22 +361,54 @@ function mergePolea(proc, tag, p, overrides){
 }
 
 /* ── Diagram ──────────────────────────────────────────── */
+/* Tipo de polea → etiqueta corta para rotular cada rueda en el diagrama. */
+const TIPO_ABBR = { MOTRIZ:'Motriz', DEFLECTORA:'Deflectora', TENSORA:'Tensora', COLA:'Cola',
+                    QUIEBRE:'Quiebre', CONTRAPESO:'Contrapeso', ENVOLVENTE:'Envolvente' };
+function abbrevTipo(t){
+  const w = (t||'').split(' (')[0].split(' ')[0].toUpperCase();
+  return TIPO_ABBR[w] || (w ? w.charAt(0)+w.slice(1).toLowerCase() : '');
+}
+
+/* Rueda de polea: aro + pernos de brida + número al centro.
+   Se lee como una rueda mecánica real, no como un círculo abstracto. */
+function Wheel({ cx, cy, col, num, drive }){
+  const R = 15, bolts = 6, br = R - 4.4;
+  const dots = [];
+  for(let i=0;i<bolts;i++){
+    const a = (Math.PI*2*i/bolts) - Math.PI/2;
+    dots.push(<circle key={i} cx={+(cx+br*Math.cos(a)).toFixed(1)} cy={+(cy+br*Math.sin(a)).toFixed(1)} r="1.25" fill={col} opacity="0.6"/>);
+  }
+  return (
+    <g>
+      {drive && <circle cx={cx} cy={cy} r={R+3} fill="none" stroke={col} strokeWidth="1.4" opacity="0.55"/>}
+      <circle cx={cx} cy={cy} r={R} fill="var(--op-surface-2)" stroke={col} strokeWidth="2.6"/>
+      {dots}
+      {num!=null && <text x={cx} y={cy+3.6} textAnchor="middle" fontSize="10.5" fontWeight="700" fill={col} fontFamily="IBM Plex Sans">{num}</text>}
+    </g>
+  );
+}
+
 function Diagram({ correa, poleas }){
   const diag = correa.diag || [];
+  const pts = diag.map(p=>p[0]+','+p[1]).join(' ');
+  const R = 15;
   return (
-    <svg className="diagram-svg" viewBox="0 -18 620 188" xmlns="http://www.w3.org/2000/svg">
-      <line x1="40" y1="75" x2="600" y2="75" stroke="var(--op-border-strong)" strokeWidth="2" opacity="0.5"/>
+    <svg className="diagram-svg" viewBox="0 -20 620 196" xmlns="http://www.w3.org/2000/svg">
+      {/* Correa: banda que recorre las poleas en su orden */}
+      <polyline points={pts} fill="none" stroke="var(--op-border-strong)" strokeWidth="7" strokeLinejoin="round" strokeLinecap="round" opacity="0.30"/>
+      <polyline points={pts} fill="none" stroke="var(--op-border-strong)" strokeWidth="1.4" strokeLinejoin="round" opacity="0.6"/>
       {diag.map((pos,idx)=>{
         const p=poleas[idx]; if(!p) return null;
         const e=EST[p._estado];
-        const r = idx===0?18:13;
+        const drive=/MOTRIZ/i.test(p.tipo||'');
+        const cx=pos[0], cy=pos[1];
         return (
           <g key={idx}>
-            <circle cx={pos[0]} cy={pos[1]} r={r} fill="none" stroke={e.col} strokeWidth="2.5" opacity="0.85"/>
-            <circle cx={pos[0]} cy={pos[1]} r={r-3} fill={e.col} opacity="0.14"/>
-            <text x={pos[0]} y={pos[1]+4} textAnchor="middle" fontSize="12" fontWeight="600" fill={e.col} fontFamily="IBM Plex Sans">{p.num}</text>
-            {p.fecha && <text x={pos[0]} y={pos[1]-r-5} textAnchor="middle" fontSize="7" fontWeight="600" fill={e.col} fontFamily="IBM Plex Mono">{p.fecha}</text>}
-            {p._dias!=null && <text x={pos[0]} y={pos[1]+r+16} textAnchor="middle" fontSize="7.5" fill="var(--op-text-3)" fontFamily="IBM Plex Sans">{p._dias}d</text>}
+            <title>{`Polea N°${p.num} · ${p.tipo||'—'}${p.fecha?` · último cambio ${p.fecha}`:' · sin cambio registrado'}`}</title>
+            {p.fecha && <text x={cx} y={cy-R-7} textAnchor="middle" fontSize="7" fontWeight="600" fill={e.col} opacity="0.9" fontFamily="IBM Plex Mono">{p.fecha}</text>}
+            <Wheel cx={cx} cy={cy} col={e.col} num={p.num} drive={drive}/>
+            <text x={cx} y={cy+R+12} textAnchor="middle" fontSize="7.6" fontWeight="600" fill="var(--op-text-2)" fontFamily="IBM Plex Sans">{abbrevTipo(p.tipo)}</text>
+            {p._dias!=null && <text x={cx} y={cy+R+22} textAnchor="middle" fontSize="7" fill="var(--op-text-3)" fontFamily="IBM Plex Sans">{fmtDias(p._dias)}</text>}
           </g>
         );
       })}
@@ -1955,9 +1987,17 @@ function App({ user, onLogout }){
         </div>
 
         <div className="legend">
-          <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Estado de la polea:</span>
-          <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Cambiada (con fecha registrada)</span>
-          <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>▲</span>Sin cambio (nunca cambiada)</span>
+          <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Cómo leer el diagrama:</span>
+          <span className="legend-item">
+            <svg width="24" height="24" viewBox="0 0 40 40" style={{flex:'none'}}><Wheel cx={20} cy={20} col="var(--op-text-2)" num={null} drive={false}/></svg>
+            Cada rueda es una polea (N.º al centro)
+          </span>
+          <span className="legend-item">
+            <svg width="24" height="24" viewBox="0 0 40 40" style={{flex:'none'}}><Wheel cx={20} cy={20} col="var(--op-text-2)" num={null} drive={true}/></svg>
+            Doble aro = polea Motriz
+          </span>
+          <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Verde: cambiada (con fecha registrada)</span>
+          <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>●</span>Rojo: sin cambio (nunca cambiada)</span>
         </div>
         </>)}
 
