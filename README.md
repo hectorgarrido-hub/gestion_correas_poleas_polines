@@ -46,3 +46,18 @@ El diagrama esquemático de cada correa se rediseñó para que se entienda de un
 
 El diagrama vive en el componente `Diagram` (y el auxiliar `Wheel`), presente tanto en
 `index.html` como en `codigo-fuente/dashboard.html`.
+
+## Despliegue en Netlify
+
+El sitio es **estático** (el `index.html` lleva todo embebido), así que no hay build.
+
+**Opción A — Conectar el repositorio (despliegue continuo):**
+1. En Netlify: *Add new site → Import an existing project → GitHub* y elige este repositorio.
+2. Deja *Build command* vacío y *Publish directory* en `.` (ya viene en `netlify.toml`).
+3. *Deploy*. Cada cambio en la rama publicada se re-despliega solo.
+
+**Opción B — Arrastrar y soltar (rápido, sin git):**
+1. Descarga `index.html`.
+2. Ve a <https://app.netlify.com/drop> y arrastra el archivo (o una carpeta que lo contenga).
+
+En ambos casos Netlify entrega una URL pública (`https://<nombre>.netlify.app`) que puedes compartir.
