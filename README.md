@@ -66,6 +66,20 @@ tres tokens de tamaño, para que todo lea como un mismo sistema:
 Proceso y correa usan el mismo tamaño; la jerarquía la dan el estilo (píldora vs. subrayado)
 y el peso del elemento activo, no el tamaño.
 
+## Resumen por correa
+
+Para priorizar de un vistazo sin abrir cada correa:
+
+- **Barra de chips** en la cabecera de la correa (sobre el diagrama): total de poleas,
+  cuántas **cambiadas** (verde), cuántas **sin cambio** (rojo), la **más antigua** (ámbar)
+  y el **TBO** (con «· en Xa Yd» o «· VENCIDO» en rojo si corresponde).
+- **Contador en la pestaña**: cada pestaña de correa muestra un globo rojo con el número de
+  poleas sin cambio (`beltBadge` / `beltSinCambio`), para detectar las correas pendientes
+  antes de entrar.
+
+Los conteos salen de `mergePolea`, por lo que reflejan los cambios registrados en Supabase,
+no solo los datos base.
+
 ## Despliegue en Netlify
 
 El sitio es **estático** (el `index.html` lleva todo embebido), así que no hay build.
