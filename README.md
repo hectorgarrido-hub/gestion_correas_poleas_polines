@@ -38,14 +38,19 @@ El diagrama esquemático de cada correa se rediseñó para que se entienda de un
   usan el mismo radio.
 - **Símbolo reconocible.** Cada polea es una **rueda** (aro + pernos de brida + número
   al centro), no un círculo abstracto.
-- **Tipo rotulado.** Bajo cada rueda se indica su tipo (Motriz, Deflectora, Tensora,
-  Cola, Quiebre, Contrapeso, Envolvente).
+- **Tipo rotulado.** Bajo cada rueda va un código de tipo de 3 letras (`MOT`, `DEF`,
+  `TEN`, `COL`, `QUI`, `CPE`, `ENV`); el nombre completo aparece en el tooltip.
 - **La motriz se distingue por rol, no por tamaño**, mediante un doble aro y su etiqueta.
 - **La correa se ve como correa:** una banda recorre las poleas en su orden.
+- **Escala adaptativa por correa.** El tamaño de rueda y de los textos se calcula desde la
+  separación real entre poleas (`layoutDiag`), y las correas de perfil plano se reparten con
+  paso constante y centrado. Así una correa de 2 poleas y otra de 12 se ven proporcionadas,
+  sin huecos ni etiquetas que se solapan. Dentro de una misma correa todas las poleas son iguales.
+- **Antigüedad compacta** (`15a`, `133d`) bajo cada rueda; el detalle exacto va en el tooltip.
 - **Leyenda** que explica el símbolo y los colores (verde = cambiada, rojo = sin cambio).
 
-El diagrama vive en el componente `Diagram` (y el auxiliar `Wheel`), presente tanto en
-`index.html` como en `codigo-fuente/dashboard.html`.
+El diagrama vive en los componentes `Diagram`, `Wheel` y el auxiliar `layoutDiag`, presentes
+tanto en `index.html` como en `codigo-fuente/dashboard.html`.
 
 ## Despliegue en Netlify
 
