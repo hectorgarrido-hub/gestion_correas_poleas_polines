@@ -52,6 +52,20 @@ El diagrama esquemático de cada correa se rediseñó para que se entienda de un
 El diagrama vive en los componentes `Diagram`, `Wheel` y el auxiliar `layoutDiag`, presentes
 tanto en `index.html` como en `codigo-fuente/dashboard.html`.
 
+## Tipografía de navegación
+
+Las pestañas de proceso, las de correa, los botones de vista/filtro y las tablas comparten
+tres tokens de tamaño, para que todo lea como un mismo sistema:
+
+| Token | Tamaño | Uso |
+|---|---|---|
+| `--fs-nav` | `0.80rem` (12px) | Pestañas de proceso y de correa, botones de vista y de filtro, texto de tablas. |
+| `--fs-caps` | `0.667rem` (10px) | Etiquetas en mayúscula (p. ej. «FEEDERS», cabeceras de tabla). |
+| `--fs-chip` | `0.733rem` (11px) | Chips y celdas de datos (belt-chip, heatmap, botones utilitarios). |
+
+Proceso y correa usan el mismo tamaño; la jerarquía la dan el estilo (píldora vs. subrayado)
+y el peso del elemento activo, no el tamaño.
+
 ## Despliegue en Netlify
 
 El sitio es **estático** (el `index.html` lleva todo embebido), así que no hay build.
