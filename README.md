@@ -80,6 +80,14 @@ Para priorizar de un vistazo sin abrir cada correa:
 Los conteos salen de `mergePolea`, por lo que reflejan los cambios registrados en Supabase,
 no solo los datos base.
 
+## Proceso canónico de cada correa
+
+Cada tag de correa pertenece a un único proceso, definido en `poleas-data.js` / `polines-data.js`.
+`TAG_PROC` construye ese mapa y `canonProc(tag, proc)` lo aplica al **cargar** los hallazgos
+de Supabase y al **importar** planillas Excel. Así un hallazgo etiquetado con el proceso
+equivocado (p. ej. `FS24210` = «Correa 10 Reversible» importado como CNN) se muestra bajo su
+proceso correcto (MAGNETITA), y las importaciones futuras se autocorrigen.
+
 ## Despliegue en Netlify
 
 El sitio es **estático** (el `index.html` lleva todo embebido), así que no hay build.

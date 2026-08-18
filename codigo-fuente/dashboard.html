@@ -285,6 +285,15 @@ const PROC_META = {
   EMBARQUE: { label:'Embarque',  dot:'var(--cmp-hematita-400)' },
 };
 
+/* Proceso canónico de cada tag, tomado de la estructura base (poleas + polines).
+   Evita que un hallazgo quede bajo el proceso equivocado: p. ej. FS24210 = Correa 10
+   Reversible pertenece a MAGNETITA aunque una planilla lo traiga como CNN. */
+const TAG_PROC = (()=>{ const m={};
+  const add = src => Object.keys(src||{}).forEach(p => Object.keys(src[p]||{}).forEach(t => { if(!(t in m)) m[t]=p; }));
+  add(window.POLEAS_DATA); add(window.POLINES_DATA);
+  return m; })();
+function canonProc(tag, proc){ return TAG_PROC[tag] || proc; }
+
 /* ═══════════════════════════════════════════════════════
    CAPA DE DATOS — Supabase (en línea) o localStorage (demo)
    ═══════════════════════════════════════════════════════ */
@@ -685,7 +694,7 @@ const pkeyId = (h)=> h.id;
 async function dbLoadPolines(){
   if(!LIVE){ return JSON.parse(localStorage.getItem(LS_POL)||'[]'); }
   const { data } = await sb.from('polines_hallazgos').select('*').order('created_at',{ascending:false});
-  return (data||[]).map(r=>({ id:'db'+r.id, proc:r.proc, tag:r.tag, fecha:r.fecha, npolin:r.npolin, ident:r.ident, pos:r.pos, cond:r.cond, accion:r.accion, prog:r.prog, crit:r.crit, aviso:r.aviso, estCond:r.est_cond, obs:r.obs, _added:true }));
+  return (data||[]).map(r=>({ id:'db'+r.id, proc:canonProc(r.tag, r.proc), tag:r.tag, fecha:r.fecha, npolin:r.npolin, ident:r.ident, pos:r.pos, cond:r.cond, accion:r.accion, prog:r.prog, crit:r.crit, aviso:r.aviso, estCond:r.est_cond, obs:r.obs, _added:true }));
 }
 async function dbAddPolin(h,user){
   if(!LIVE){
@@ -759,7 +768,7 @@ function parseExcelPolines(aoa){
   for(let r=hdrIdx+1;r<aoa.length;r++){
     const row=aoa[r]||[]; if(row.every(c=>c==null||String(c).trim()===''))continue;
     const equipo=(get(row,'equipo')||'').toString().trim().toUpperCase();
-    const proc=areaToProc(get(row,'area'));
+    let proc=areaToProc(get(row,'area')); if(TAG_PROC[equipo]) proc=TAG_PROC[equipo];
     const crit=normCrit(get(row,'crit'));
     if(!equipo){ skipped++; continue; }
     if(!proc){ warns.push(`Fila ${r+1}: área no reconocida (“${get(row,'area')}”) — omitida`); skipped++; continue; }
