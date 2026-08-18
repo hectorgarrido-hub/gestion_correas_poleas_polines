@@ -1,0 +1,12 @@
+# Configuración de despliegue en Netlify.
+# El sitio es estático (index.html autocontenido): no requiere build.
+[build]
+  publish = "."
+  command = ""
+
+# Cabeceras básicas de seguridad para el HTML.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"

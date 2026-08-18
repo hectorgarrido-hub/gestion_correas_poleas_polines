@@ -13,7 +13,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
-  html,body,#root { height:100%; }
+  html,body,#root { height:100%; }  :root{ --fs-nav:0.85rem; --fs-caps:0.72rem; --fs-chip:0.78rem; }
   body { overflow:hidden; }
   .app { display:flex; flex-direction:column; height:100vh; background:var(--op-bg); overflow:hidden; }
 
@@ -29,7 +29,7 @@
   .nb-pulse { width:6px; height:6px; border-radius:50%; background:var(--status-running); }
   .nb-time { font-size:0.857rem; color:var(--cmp-blue-200); font-family:var(--font-mono); font-variant-numeric:tabular-nums; }
   .nb-user { padding:3px 10px; background:var(--cmp-blue-700); border-radius:var(--radius-1); font-size:0.786rem; color:var(--cmp-blue-100); display:flex; align-items:center; gap:5px; }
-  .nb-btn { padding:4px 11px; background:rgba(255,255,255,0.07); border:1px solid var(--cmp-blue-700); color:var(--cmp-blue-100); border-radius:var(--radius-1); font-size:0.75rem; font-weight:500; cursor:pointer; font-family:var(--font-sans); transition:all .12s; display:flex; align-items:center; gap:5px; }
+  .nb-btn { padding:4px 11px; background:rgba(255,255,255,0.07); border:1px solid var(--cmp-blue-700); color:var(--cmp-blue-100); border-radius:var(--radius-1); font-size:var(--fs-chip); font-weight:500; cursor:pointer; font-family:var(--font-sans); transition:all .12s; display:flex; align-items:center; gap:5px; }
   .nb-btn:hover { background:var(--cmp-blue-700); color:#fff; border-color:var(--cmp-blue-500); }
 
   /* BREADCRUMB */
@@ -42,20 +42,21 @@
   /* PROCESS + TAB SELECTOR */
   .selbar { background:var(--op-surface-1); border-bottom:1px solid var(--op-border-subtle); padding:8px 20px; display:flex; align-items:center; gap:16px; flex-shrink:0; flex-wrap:wrap; }
   .sel-label { font-size:0.714rem; font-weight:500; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); }
-  .proc-btn { display:inline-flex; align-items:center; gap:7px; padding:5px 14px; border:1px solid var(--op-border-subtle); background:var(--op-surface-2); border-radius:var(--radius-1); font-family:var(--font-sans); font-size:0.857rem; font-weight:500; color:var(--op-text-2); cursor:pointer; transition:all .12s; }
+  .proc-btn { display:inline-flex; align-items:center; gap:7px; padding:5px 14px; border:1px solid var(--op-border-subtle); background:var(--op-surface-2); border-radius:var(--radius-1); font-family:var(--font-sans); font-size:var(--fs-nav); font-weight:500; color:var(--op-text-2); cursor:pointer; transition:all .12s; }
   .proc-btn:hover { border-color:var(--op-border-strong); color:var(--op-text-1); }
-  .proc-btn.active { background:var(--cmp-blue-700); border-color:var(--cmp-blue-500); color:#fff; }
+  .proc-btn.active { background:var(--cmp-blue-700); border-color:var(--cmp-blue-500); color:#fff; font-weight:600; }
   .proc-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
   .tabs { background:var(--op-surface-0); border-bottom:1px solid var(--op-border-subtle); padding:0 20px; display:flex; gap:0; overflow-x:auto; flex-shrink:0; }
   .tabs.has-feeders { padding:0; flex-direction:column; overflow-x:visible; }
   .tabs-row { display:flex; gap:0; overflow-x:auto; padding:0 20px; }
   .tabs-row.feeder-row { background:rgba(82,160,108,0.06); border-top:1px solid var(--op-border-subtle); }
-  .tabs-row-label { font-size:0.600rem; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--op-text-3); display:flex; align-items:center; padding:0 10px 0 20px; white-space:nowrap; flex-shrink:0; border-right:1px solid var(--op-border-subtle); }
-  .tab { padding:9px 14px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-weight:500; font-size:0.786rem; cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .12s; display:flex; align-items:center; gap:7px; }
+  .tabs-row-label { font-size:var(--fs-caps); font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--op-text-3); display:flex; align-items:center; padding:0 10px 0 20px; white-space:nowrap; flex-shrink:0; border-right:1px solid var(--op-border-subtle); }
+  .tab { padding:9px 14px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-weight:500; font-size:var(--fs-nav); cursor:pointer; border-bottom:2px solid transparent; white-space:nowrap; transition:all .12s; display:flex; align-items:center; gap:7px; }
   .tab:hover { color:var(--op-text-1); background:var(--op-surface-1); }
-  .tab.active { color:#fff; border-bottom-color:var(--cmp-hematita-500); }
+  .tab.active { color:#fff; border-bottom-color:var(--cmp-hematita-500); font-weight:600; }
   .tab-alarm { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  .tab-badge { min-width:15px; height:15px; padding:0 4px; border-radius:999px; font-size:0.6rem; font-weight:700; line-height:15px; text-align:center; font-variant-numeric:tabular-nums; color:#fff; background:var(--alarm-critical); font-family:var(--font-sans); }
 
   /* MAIN */
   .main { flex:1; overflow-y:auto; padding:14px 20px 20px; }
@@ -89,11 +90,14 @@
   .belt-hdr { background:var(--op-surface-2); border:1px solid var(--op-border-subtle); border-left:3px solid var(--cmp-blue-500); border-radius:var(--radius-2); padding:9px 14px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
   .belt-name { font-size:1rem; font-weight:500; color:var(--op-text-1); }
   .belt-meta { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .belt-chip { font-size:0.714rem; font-family:var(--font-mono); color:var(--op-text-2); background:var(--op-surface-3); border:1px solid var(--op-border-subtle); padding:2px 8px; border-radius:var(--radius-1); }
+  .belt-chip { font-size:var(--fs-chip); font-family:var(--font-mono); color:var(--op-text-2); background:var(--op-surface-3); border:1px solid var(--op-border-subtle); padding:2px 8px; border-radius:var(--radius-1); }
+  .belt-chip-ok { font-family:var(--font-sans); color:var(--status-running-light); border-color:var(--status-running-border); background:var(--status-running-bg); }
+  .belt-chip-crit { font-family:var(--font-sans); color:var(--alarm-critical-light); border-color:var(--alarm-critical-border); background:var(--alarm-critical-bg); }
+  .belt-chip-age { font-family:var(--font-sans); color:var(--alarm-warning-light); border-color:var(--alarm-warning-border); background:var(--alarm-warning-bg); }
 
   /* Diagram */
   .diagram-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); padding:14px; margin-bottom:12px; overflow-x:auto; }
-  .diagram-svg { width:100%; display:block; min-height:110px; }
+  .diagram-svg { width:100%; display:block; min-height:118px; }
 
   /* Pulley grid */
   .polea-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(232px, 1fr)); gap:10px; }
@@ -153,8 +157,8 @@
   .btn-danger:hover { background:var(--alarm-critical-bg); }
 
   /* AUDIT TABLE */
-  .audit-table { width:100%; border-collapse:collapse; font-size:0.786rem; }
-  .audit-table th { text-align:left; padding:7px 10px; font-size:0.667rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); position:sticky; top:0; background:var(--op-surface-2); }
+  .audit-table { width:100%; border-collapse:collapse; font-size:var(--fs-nav); }
+  .audit-table th { text-align:left; padding:7px 10px; font-size:var(--fs-caps); font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); position:sticky; top:0; background:var(--op-surface-2); }
   .audit-table td { padding:7px 10px; border-bottom:1px solid var(--op-border-subtle); color:var(--op-text-2); vertical-align:top; }
   .audit-ts { font-family:var(--font-mono); font-size:0.714rem; color:var(--op-text-3); white-space:nowrap; }
   .audit-user { color:var(--op-text-1); font-weight:500; white-space:nowrap; }
@@ -181,7 +185,7 @@
 
   /* VISTA TOGGLE (Poleas | Polines) */
   .vista-toggle { display:flex; gap:0; background:var(--op-surface-3); border:1px solid var(--op-border-subtle); border-radius:var(--radius-1); overflow:hidden; }
-  .vista-btn { padding:5px 16px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-size:0.786rem; font-weight:600; cursor:pointer; transition:all .12s; display:flex; align-items:center; gap:6px; letter-spacing:.03em; }
+  .vista-btn { padding:5px 16px; border:none; background:transparent; color:var(--op-text-3); font-family:var(--font-sans); font-size:var(--fs-nav); font-weight:600; cursor:pointer; transition:all .12s; display:flex; align-items:center; gap:6px; letter-spacing:.03em; }
   .vista-btn.active { background:var(--cmp-blue-700); color:#fff; }
   .vista-btn:not(.active):hover { color:var(--op-text-1); background:var(--op-surface-4); }
   .vista-btn:disabled { opacity:.4; cursor:not-allowed; }
@@ -196,7 +200,7 @@
   .resumen-td { padding:4px 8px; font-size:0.786rem; vertical-align:middle; border-bottom:1px solid var(--op-border-subtle); }
   .heat-grid th.hcol { font-size:0.700rem; font-weight:500; color:var(--op-text-3); font-family:var(--font-mono); writing-mode:vertical-rl; transform:rotate(180deg); white-space:nowrap; height:82px; vertical-align:bottom; padding-bottom:3px; }
   .heat-grid th.hrow { font-size:0.714rem; font-weight:500; color:var(--op-text-2); text-align:right; padding-right:8px; white-space:nowrap; }
-  .heat-cell { width:30px; height:26px; border-radius:var(--radius-1); text-align:center; font-size:0.714rem; font-variant-numeric:tabular-nums; font-weight:600; border:1px solid transparent; }
+  .heat-cell { width:30px; height:26px; border-radius:var(--radius-1); text-align:center; font-size:var(--fs-chip); font-variant-numeric:tabular-nums; font-weight:600; border:1px solid transparent; }
   .heat-cell.tot { background:var(--op-surface-3); color:var(--op-text-1); border-color:var(--op-border-subtle); }
   .heat-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:9px; border-top:1px solid var(--op-border-subtle); }
   .heat-li { display:flex; align-items:center; gap:5px; font-size:0.714rem; color:var(--op-text-3); }
@@ -208,8 +212,8 @@
 
   /* Polines table */
   .pol-table-wrap { background:var(--op-surface-1); border:1px solid var(--op-border-subtle); border-radius:var(--radius-2); overflow:auto; }
-  .pol-table { width:100%; border-collapse:collapse; font-size:0.786rem; }
-  .pol-table th { text-align:left; padding:7px 10px; font-size:0.667rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); background:var(--op-surface-2); position:sticky; top:0; white-space:nowrap; }
+  .pol-table { width:100%; border-collapse:collapse; font-size:var(--fs-nav); }
+  .pol-table th { text-align:left; padding:7px 10px; font-size:var(--fs-caps); font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--op-text-3); border-bottom:1px solid var(--op-border-strong); background:var(--op-surface-2); position:sticky; top:0; white-space:nowrap; }
   .pol-table td { padding:6px 10px; border-bottom:1px solid var(--op-border-subtle); color:var(--op-text-2); vertical-align:top; }
   .pol-crit { display:inline-flex; align-items:center; gap:4px; font-size:0.714rem; font-weight:600; padding:1px 7px; border-radius:var(--radius-1); white-space:nowrap; }
   .pol-estado { font-size:0.667rem; font-weight:600; padding:1px 6px; border-radius:var(--radius-1); white-space:nowrap; }
@@ -217,7 +221,7 @@
   .pol-del:hover { color:var(--alarm-critical-light); border-color:var(--alarm-critical-border); background:var(--alarm-critical-bg); }
   .pol-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
   .pol-filter { display:flex; gap:2px; }
-  .pol-fbtn { padding:4px 12px; font-size:0.786rem; border:1px solid var(--op-border-subtle); background:var(--op-surface-2); color:var(--op-text-3); border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); }
+  .pol-fbtn { padding:4px 12px; font-size:var(--fs-nav); border:1px solid var(--op-border-subtle); background:var(--op-surface-2); color:var(--op-text-3); border-radius:var(--radius-1); cursor:pointer; font-family:var(--font-sans); }
   .pol-fbtn.active { background:var(--cmp-blue-700); color:#fff; border-color:var(--cmp-blue-500); }
 </style>
 </head>
@@ -280,6 +284,15 @@ const PROC_META = {
   CNN:      { label:'CNN',       dot:'var(--status-running)' },
   EMBARQUE: { label:'Embarque',  dot:'var(--cmp-hematita-400)' },
 };
+
+/* Proceso canónico de cada tag, tomado de la estructura base (poleas + polines).
+   Evita que un hallazgo quede bajo el proceso equivocado: p. ej. FS24210 = Correa 10
+   Reversible pertenece a MAGNETITA aunque una planilla lo traiga como CNN. */
+const TAG_PROC = (()=>{ const m={};
+  const add = src => Object.keys(src||{}).forEach(p => Object.keys(src[p]||{}).forEach(t => { if(!(t in m)) m[t]=p; }));
+  add(window.POLEAS_DATA); add(window.POLINES_DATA);
+  return m; })();
+function canonProc(tag, proc){ return TAG_PROC[tag] || proc; }
 
 /* ═══════════════════════════════════════════════════════
    CAPA DE DATOS — Supabase (en línea) o localStorage (demo)
@@ -361,22 +374,79 @@ function mergePolea(proc, tag, p, overrides){
 }
 
 /* ── Diagram ──────────────────────────────────────────── */
+/* Tipo de polea -> nombre corto y codigo de 3 letras para el diagrama. */
+const TIPO_ABBR = { MOTRIZ:'Motriz', DEFLECTORA:'Deflectora', TENSORA:'Tensora', COLA:'Cola',
+                    QUIEBRE:'Quiebre', CONTRAPESO:'Contrapeso', ENVOLVENTE:'Envolvente' };
+const TIPO_CODE = { MOTRIZ:'MOT', DEFLECTORA:'DEF', TENSORA:'TEN', COLA:'COL',
+                    QUIEBRE:'QUI', CONTRAPESO:'CPE', ENVOLVENTE:'ENV' };
+function tipoWord(t){ return (t||'').split(' (')[0].split(' ')[0].toUpperCase(); }
+function abbrevTipo(t){ const w=tipoWord(t); return TIPO_ABBR[w] || (w ? w.charAt(0)+w.slice(1).toLowerCase() : ''); }
+function codeTipo(t){ const w=tipoWord(t); return TIPO_CODE[w] || w.slice(0,3); }
+
+/* Antiguedad compacta para el diagrama: 15a / 133d. El detalle exacto va en el tooltip. */
+function fmtDiasCorto(n){ if(n==null) return ''; if(n>=365) return Math.floor(n/365)+'a'; return n+'d'; }
+
+/* Rueda de polea: aro + pernos de brida + numero al centro. R es adaptable. */
+function Wheel({ cx, cy, col, num, R=15, drive }){
+  const bolts=6, br=R-4.0, dots=[];
+  for(let i=0;i<bolts;i++){ const a=(Math.PI*2*i/bolts)-Math.PI/2;
+    dots.push(<circle key={i} cx={+(cx+br*Math.cos(a)).toFixed(1)} cy={+(cy+br*Math.sin(a)).toFixed(1)} r="1.3" fill={col} opacity="0.6"/>); }
+  return (
+    <g>
+      {drive && <circle cx={cx} cy={cy} r={+(R+2.6).toFixed(1)} fill="none" stroke={col} strokeWidth="1.5" opacity="0.55"/>}
+      <circle cx={cx} cy={cy} r={R} fill="var(--op-surface-2)" stroke={col} strokeWidth="2.6"/>
+      {dots}
+      {num!=null && <text x={cx} y={+(cy+R*0.34).toFixed(1)} textAnchor="middle" fontSize={+(R*0.8).toFixed(1)} fontWeight="700" fill={col} fontFamily="IBM Plex Sans">{num}</text>}
+    </g>
+  );
+}
+
+/* Reparte las poleas: en correas planas usa paso constante y centrado (sin huecos
+   ni amontonamiento); en correas con desnivel conserva la geometria original. */
+function layoutDiag(diag){
+  const raw = diag.map(p=>({x:p[0], y:p[1]}));
+  const n = raw.length;
+  if(!n) return { pos:[], R:15, s:116 };
+  const ys = raw.map(p=>p.y);
+  const flat = (Math.max.apply(null,ys)-Math.min.apply(null,ys)) <= 2;
+  const W=620, M=48, PMAX=116, CY=80;
+  let pos, s;
+  if(flat && n>1){ const pitch=Math.min((W-2*M)/(n-1), PMAX); const tot=pitch*(n-1); const x0=(W-tot)/2;
+    pos=raw.map((_,i)=>({x:x0+i*pitch, y:CY})); s=pitch; }
+  else if(n===1){ pos=[{x:W/2, y:CY}]; s=PMAX; }
+  else { pos=raw; s=1e9; for(let i=0;i<n-1;i++){ const dx=raw[i+1].x-raw[i].x, dy=raw[i+1].y-raw[i].y; s=Math.min(s, Math.hypot(dx,dy)); } if(s===1e9) s=PMAX; }
+  const R = Math.max(9, Math.min(12, Math.round(s*0.28)));
+  return { pos, R, s };
+}
+
 function Diagram({ correa, poleas }){
   const diag = correa.diag || [];
+  const { pos, R, s } = layoutDiag(diag);
+  const codeF=+(R*0.6).toFixed(1), metaF=+(R*0.56).toFixed(1), dateF=+(R*0.52).toFixed(1);
+  const showFull = s>=78;
+  const pts = pos.map(p=>p.x+','+p.y).join(' ');
+  let top=1e9, bot=-1e9;
+  pos.forEach(pt=>{ const dY=pt.y-R-R*0.5, diaY=pt.y+R+R*0.95+codeF+3.5;
+    top=Math.min(top, dY-dateF-2); bot=Math.max(bot, diaY+metaF-1); });
+  if(!pos.length){ top=0; bot=120; }
   return (
-    <svg className="diagram-svg" viewBox="0 -18 620 188" xmlns="http://www.w3.org/2000/svg">
-      <line x1="40" y1="75" x2="600" y2="75" stroke="var(--op-border-strong)" strokeWidth="2" opacity="0.5"/>
-      {diag.map((pos,idx)=>{
+    <svg className="diagram-svg" viewBox={'0 '+top.toFixed(1)+' 620 '+(bot-top).toFixed(1)} xmlns="http://www.w3.org/2000/svg">
+      <polyline points={pts} fill="none" stroke="var(--op-border-strong)" strokeWidth={+(R*0.5).toFixed(1)} strokeLinejoin="round" strokeLinecap="round" opacity="0.26"/>
+      <polyline points={pts} fill="none" stroke="var(--op-border-strong)" strokeWidth="1.3" strokeLinejoin="round" opacity="0.5"/>
+      {pos.map((pt,idx)=>{
         const p=poleas[idx]; if(!p) return null;
         const e=EST[p._estado];
-        const r = idx===0?18:13;
+        const drive=/MOTRIZ/i.test(p.tipo||'');
+        const cx=pt.x, cy=pt.y;
+        const dateY=cy-R-R*0.5, codeY=cy+R+R*0.95, diasY=codeY+codeF+3.5;
+        const dtxt = p.fecha ? (showFull ? p.fecha : (p.fecha.split('-')[1]+'-'+(p.fecha.split('-')[2]||'').slice(2))) : '';
         return (
           <g key={idx}>
-            <circle cx={pos[0]} cy={pos[1]} r={r} fill="none" stroke={e.col} strokeWidth="2.5" opacity="0.85"/>
-            <circle cx={pos[0]} cy={pos[1]} r={r-3} fill={e.col} opacity="0.14"/>
-            <text x={pos[0]} y={pos[1]+4} textAnchor="middle" fontSize="12" fontWeight="600" fill={e.col} fontFamily="IBM Plex Sans">{p.num}</text>
-            {p.fecha && <text x={pos[0]} y={pos[1]-r-5} textAnchor="middle" fontSize="7" fontWeight="600" fill={e.col} fontFamily="IBM Plex Mono">{p.fecha}</text>}
-            {p._dias!=null && <text x={pos[0]} y={pos[1]+r+16} textAnchor="middle" fontSize="7.5" fill="var(--op-text-3)" fontFamily="IBM Plex Sans">{p._dias}d</text>}
+            <title>{'Polea N\u00B0'+p.num+' \u00B7 '+(p.tipo||'\u2014')+(p.fecha?' \u00B7 ultimo cambio '+p.fecha:' \u00B7 sin cambio registrado')}</title>
+            {p.fecha && <text x={cx} y={+dateY.toFixed(1)} textAnchor="middle" fontSize={dateF} fontWeight="600" fill={e.col} opacity="0.92" fontFamily="IBM Plex Sans">{dtxt}</text>}
+            <Wheel cx={cx} cy={cy} col={e.col} num={p.num} R={R} drive={drive}/>
+            <text x={cx} y={+codeY.toFixed(1)} textAnchor="middle" fontSize={codeF} fontWeight="700" letterSpacing="0.4" fill="var(--op-text-2)" fontFamily="IBM Plex Sans">{codeTipo(p.tipo)}</text>
+            {p._dias!=null && <text x={cx} y={+diasY.toFixed(1)} textAnchor="middle" fontSize={metaF} fill="var(--op-text-3)" fontFamily="IBM Plex Sans">{fmtDiasCorto(p._dias)}</text>}
           </g>
         );
       })}
@@ -624,7 +694,7 @@ const pkeyId = (h)=> h.id;
 async function dbLoadPolines(){
   if(!LIVE){ return JSON.parse(localStorage.getItem(LS_POL)||'[]'); }
   const { data } = await sb.from('polines_hallazgos').select('*').order('created_at',{ascending:false});
-  return (data||[]).map(r=>({ id:'db'+r.id, proc:r.proc, tag:r.tag, fecha:r.fecha, npolin:r.npolin, ident:r.ident, pos:r.pos, cond:r.cond, accion:r.accion, prog:r.prog, crit:r.crit, aviso:r.aviso, estCond:r.est_cond, obs:r.obs, _added:true }));
+  return (data||[]).map(r=>({ id:'db'+r.id, proc:canonProc(r.tag, r.proc), tag:r.tag, fecha:r.fecha, npolin:r.npolin, ident:r.ident, pos:r.pos, cond:r.cond, accion:r.accion, prog:r.prog, crit:r.crit, aviso:r.aviso, estCond:r.est_cond, obs:r.obs, _added:true }));
 }
 async function dbAddPolin(h,user){
   if(!LIVE){
@@ -698,7 +768,7 @@ function parseExcelPolines(aoa){
   for(let r=hdrIdx+1;r<aoa.length;r++){
     const row=aoa[r]||[]; if(row.every(c=>c==null||String(c).trim()===''))continue;
     const equipo=(get(row,'equipo')||'').toString().trim().toUpperCase();
-    const proc=areaToProc(get(row,'area'));
+    let proc=areaToProc(get(row,'area')); if(TAG_PROC[equipo]) proc=TAG_PROC[equipo];
     const crit=normCrit(get(row,'crit'));
     if(!equipo){ skipped++; continue; }
     if(!proc){ warns.push(`Fila ${r+1}: área no reconocida (“${get(row,'area')}”) — omitida`); skipped++; continue; }
@@ -1690,6 +1760,8 @@ function App({ user, onLogout }){
     const polCrit=ph.some(h=>h.estCond==='Activo' && ['Alta','Muy Alta','Mantención Mayor'].includes(h.crit));
     return (red||polCrit)?1:0;
   }
+  function beltSinCambio(t){ const c=DATA[proc][t]; if(!c||!c.poleas) return 0; return c.poleas.filter(p=>mergePolea(proc,t,p,overrides)._estado==='nunca').length; }
+  function beltBadge(t){ const n=beltSinCambio(t); return n>0 ? <span className="tab-badge">{n}</span> : null; }
   const rankCol=['var(--status-running)','var(--alarm-critical)'];
 
   const total=poleas.length;
@@ -1870,7 +1942,7 @@ function App({ user, onLogout }){
                 return (
                   <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}>
                     <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
-                    {b.nombre}
+                    {b.nombre}{beltBadge(b.tag)}
                   </button>
                 );
               })}
@@ -1883,7 +1955,7 @@ function App({ user, onLogout }){
                   <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}
                     style={tag===b.tag?{}:{color:'var(--status-running-light)'}}>
                     <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
-                    {b.nombre}
+                    {b.nombre}{beltBadge(b.tag)}
                   </button>
                 );
               })}
@@ -1895,7 +1967,7 @@ function App({ user, onLogout }){
             return (
               <button key={b.tag} className={`tab${tag===b.tag?' active':''}`} onClick={()=>setTag(b.tag)}>
                 <span className="tab-alarm" style={{background:worst?'var(--alarm-critical)':'var(--status-running)'}}></span>
-                {b.nombre}
+                {b.nombre}{beltBadge(b.tag)}
               </button>
             );
           })
@@ -1942,7 +2014,12 @@ function App({ user, onLogout }){
           <div className="belt-meta">
             <span className="belt-chip">TAG {tag}</span>
             <span className="belt-chip">{total} poleas</span>
-            <span className="belt-chip" style={tboVenc?{color:'var(--alarm-critical-light)',borderColor:'var(--alarm-critical-border)',background:'var(--alarm-critical-bg)'}:{}}>TBO {tboEff}{tboVenc?' · VENCIDO':''}</span>
+            {conReg>0 && <span className="belt-chip belt-chip-ok">● {conReg} cambiada{conReg>1?'s':''}</span>}
+            {alarmCount>0
+              ? <span className="belt-chip belt-chip-crit">▲ {alarmCount} sin cambio</span>
+              : <span className="belt-chip belt-chip-ok">● al día</span>}
+            {masAntigua!=null && <span className="belt-chip belt-chip-age">⏱ más antigua {fmtDias(masAntigua)}</span>}
+            <span className={`belt-chip${tboVenc?' belt-chip-crit':(tboCount!=null&&tboCount<=30?' belt-chip-age':'')}`}>TBO {tboEff}{tboVenc?' · VENCIDO':(tboCount!=null?` · en ${fmtDias(tboCount)}`:'')}</span>
           </div>
         </div>
 
@@ -1950,14 +2027,22 @@ function App({ user, onLogout }){
           <Diagram correa={correa} poleas={poleas}/>
         </div>
 
-        <div className="polea-grid">
-          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
+        <div className="legend">
+          <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Como leer el diagrama:</span>
+          <span className="legend-item">
+            <svg width="24" height="24" viewBox="0 0 40 40" style={{flex:'none'}}><Wheel cx={20} cy={20} col="var(--op-text-2)" num={null} drive={false}/></svg>
+            Cada rueda es una polea (N.º al centro)
+          </span>
+          <span className="legend-item">
+            <svg width="24" height="24" viewBox="0 0 40 40" style={{flex:'none'}}><Wheel cx={20} cy={20} col="var(--op-text-2)" num={null} drive={true}/></svg>
+            Doble aro = polea Motriz
+          </span>
+          <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Verde: cambiada (con fecha registrada)</span>
+          <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>●</span>Rojo: sin cambio (nunca cambiada)</span>
         </div>
 
-        <div className="legend">
-          <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Estado de la polea:</span>
-          <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Cambiada (con fecha registrada)</span>
-          <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>▲</span>Sin cambio (nunca cambiada)</span>
+        <div className="polea-grid">
+          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
         </div>
         </>)}
 
@@ -1972,6 +2057,7 @@ function App({ user, onLogout }){
         <span className="sb-item"><span style={{width:6,height:6,borderRadius:'50%',background:LIVE?'var(--status-running)':'var(--alarm-warning)',display:'inline-block'}}></span>{LIVE?'En línea · datos compartidos':'Modo demo · datos locales'}</span>
         <span className="sb-item">{loaded?`${audit.length} movimientos en historial`:'Cargando…'}</span>
         <span className="sb-item" style={{marginLeft:'auto'}}>{PROC_META[proc].label} · {beltInfo.nombre} · {dateStr} {timeStr}</span>
+        <span className="sb-item">Diseñado por Héctor Garrido Pérez</span>
         <span className="sb-item"><a href="index.html">CMP Design System v1.0</a></span>
       </div>
 
