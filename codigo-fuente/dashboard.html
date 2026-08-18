@@ -2018,10 +2018,6 @@ function App({ user, onLogout }){
           <Diagram correa={correa} poleas={poleas}/>
         </div>
 
-        <div className="polea-grid">
-          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
-        </div>
-
         <div className="legend">
           <span style={{fontWeight:500,color:'var(--op-text-2)'}}>Como leer el diagrama:</span>
           <span className="legend-item">
@@ -2034,6 +2030,10 @@ function App({ user, onLogout }){
           </span>
           <span className="legend-item"><span style={{color:'var(--status-running)',fontWeight:600}}>●</span>Verde: cambiada (con fecha registrada)</span>
           <span className="legend-item"><span style={{color:'var(--alarm-critical)',fontWeight:600}}>●</span>Rojo: sin cambio (nunca cambiada)</span>
+        </div>
+
+        <div className="polea-grid">
+          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
         </div>
         </>)}
 
@@ -2048,6 +2048,7 @@ function App({ user, onLogout }){
         <span className="sb-item"><span style={{width:6,height:6,borderRadius:'50%',background:LIVE?'var(--status-running)':'var(--alarm-warning)',display:'inline-block'}}></span>{LIVE?'En línea · datos compartidos':'Modo demo · datos locales'}</span>
         <span className="sb-item">{loaded?`${audit.length} movimientos en historial`:'Cargando…'}</span>
         <span className="sb-item" style={{marginLeft:'auto'}}>{PROC_META[proc].label} · {beltInfo.nombre} · {dateStr} {timeStr}</span>
+        <span className="sb-item">Diseñado por Héctor Garrido Pérez</span>
         <span className="sb-item"><a href="index.html">CMP Design System v1.0</a></span>
       </div>
 
