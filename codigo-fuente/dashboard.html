@@ -1592,7 +1592,7 @@ function EstadoPoleasView({ overrides, tboOverrides }){
         </button>
         <button onClick={async()=>{
           try{
-            const payload={ report:'poleas', proc:filtroProc, rows:sorted.map(r=>({ nombre:r.nombre, proc:PROC_META[r.proc]?.label||r.proc, tag:r.tag, total:r.total, sinCambio:r.sinCambio, conCambio:r.conCambio, tboEff:r.tboEff||null, tboDias:r.tboDias, tboVenc:r.tboVenc, ultima:r.ultima||null })) };
+            const payload={ report:'poleas', proc:filtroProc==='todos'?'Todos los procesos':(PROC_META[filtroProc]?.label||filtroProc), kpis:{ correas:totCorreas, poleas:totPoleas, conCambio:totConCambio, sinCambio:totSinCambio, tboVenc:tboVencidos, tboProx:tboProximos }, rows:sorted.map(r=>({ nombre:r.nombre, proc:PROC_META[r.proc]?.label||r.proc, total:r.total, sinCambio:r.sinCambio, conCambio:r.conCambio, tboEff:r.tboEff||null, tboDias:r.tboDias, tboVenc:r.tboVenc, ultima:r.ultima||null })) };
             const resp=await fetch(`${SUPABASE_URL}/functions/v1/enviar-resumen-criticos`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify(payload)});
             const d=await resp.json();
             alert(d.ok?'✅ Correo enviado correctamente':'Error: '+(d.error||'desconocido'));
