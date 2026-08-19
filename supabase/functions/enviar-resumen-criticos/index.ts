@@ -64,6 +64,106 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Headers": "Authorization, Content-Type, x-cron-secret",
 };
 
+// ── Resumen "Estado Poleas & TBO" ────────────────────────────
+// Recibe las filas ya calculadas por la app (una por correa) y arma el correo.
+async function enviarResumenPoleas(body: any): Promise<Response> {
+  const hoy  = new Date().toLocaleDateString("es-CL", { dateStyle: "long" });
+  const rows: any[] = Array.isArray(body?.rows) ? body.rows : [];
+  const procLabel = body?.proc && body.proc !== "todos" ? String(body.proc) : "Todos los procesos";
+  const esc = (v: any) => (v == null || v === "" ? "—" : String(v)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const num = (v: any) => (v == null ? null : Number(v));
+
+  const nCorreas  = rows.length;
+  const correasSin = rows.filter((r) => (num(r.sinCambio) ?? 0) > 0).length;
+  const totSin    = rows.reduce((s, r) => s + (num(r.sinCambio) ?? 0), 0);
+  const tboVenc   = rows.filter((r) => r.tboVenc).length;
+  const tboProx   = rows.filter((r) => !r.tboVenc && num(r.tboDias) != null && (num(r.tboDias) as number) <= 90).length;
+
+  const kpi = (label: string, value: number | string, color: string, sub: string) => `<td width="25%" style="padding:0 4px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#fff;border:1px solid #dde2ec;border-top:3px solid ${color}">
+      <tr><td style="padding:8px 10px">
+        <div style="font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">${label}</div>
+        <div style="font-size:22px;font-weight:700;color:#111;line-height:1.1">${value}</div>
+        <div style="font-size:9px;color:#aaa;margin-top:2px">${sub}</div>
+      </td></tr>
+    </table></td>`;
+
+  const bodyRows = rows.map((r, i) => {
+    const bg = i % 2 === 0 ? "#f8f8f8" : "#fff";
+    const scN = num(r.sinCambio) ?? 0;
+    const sc = scN > 0 ? "#b91c1c" : "#16a34a";
+    const td = num(r.tboDias);
+    const tboTxt = r.tboVenc ? "▲ VENCIDO" : (td != null && td <= 90 ? `◆ ${td} d` : (td != null ? `● ${td} d` : "—"));
+    const tboCol = r.tboVenc ? "#b91c1c" : (td != null && td <= 90 ? "#b45309" : "#16a34a");
+    return `<tr style="background:${bg}">
+      <td style="padding:5px 10px;font-weight:600;font-size:11px;border-left:3px solid ${scN > 0 ? "#b91c1c" : "#16a34a"}">${esc(r.nombre)}</td>
+      <td style="padding:5px 8px;font-size:10px;color:#666">${esc(r.proc)}</td>
+      <td style="padding:5px 8px;font-size:10px;color:#555;font-family:monospace">${esc(r.tag)}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:11px">${esc(r.total)}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;font-size:11px;color:${sc}">${esc(r.sinCambio)}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:11px;color:#16a34a">${esc(r.conCambio)}</td>
+      <td style="padding:5px 8px;text-align:center;font-size:10px;font-family:monospace">${esc(r.tboEff)}</td>
+      <td style="padding:5px 8px;text-align:center;font-weight:700;font-size:11px;color:${tboCol}">${tboTxt}</td>
+      <td style="padding:5px 8px;font-size:10px;font-family:monospace;color:#666">${esc(r.ultima)}</td>
+    </tr>`;
+  }).join("");
+
+  const htmlBody = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,sans-serif;background:#eef0f5;margin:0;padding:20px 0">
+<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:0 8px">
+<table width="760" cellpadding="0" cellspacing="0" style="max-width:760px;width:100%">
+  <tr><td style="background:#071840;padding:16px 22px;border-radius:6px 6px 0 0">
+    <div style="color:#fff;font-size:16px;font-weight:700">Estado de Poleas &amp; TBO</div>
+    <div style="color:#A9C6EB;font-size:11px;margin-top:2px">${procLabel} · ${hoy}</div>
+  </td></tr>
+  <tr><td style="background:#fff;border:1px solid #dde2ec;border-top:none;padding:14px 18px">
+    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+      ${kpi("Correas", nCorreas, "#3B82F6", `${procLabel}`)}
+      ${kpi("Con poleas sin cambio", correasSin, correasSin > 0 ? "#b91c1c" : "#16a34a", `${totSin} poleas en total`)}
+      ${kpi("TBO vencido", tboVenc, tboVenc > 0 ? "#b91c1c" : "#16a34a", "correas")}
+      ${kpi("TBO ≤ 90 días", tboProx, tboProx > 0 ? "#b45309" : "#16a34a", "correas")}
+    </tr></table>
+  </td></tr>
+  <tr><td style="background:#fff;border:1px solid #dde2ec;border-top:none;padding:0 0 4px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr style="background:#f0f2f7">
+        <th style="text-align:left;padding:6px 10px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Correa</th>
+        <th style="text-align:left;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Proceso</th>
+        <th style="text-align:left;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">TAG</th>
+        <th style="text-align:center;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Total</th>
+        <th style="text-align:center;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Sin cambio</th>
+        <th style="text-align:center;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Cambiadas</th>
+        <th style="text-align:center;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">TBO</th>
+        <th style="text-align:center;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Estado TBO</th>
+        <th style="text-align:left;padding:6px 8px;font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em">Último cambio</th>
+      </tr></thead>
+      <tbody>${bodyRows || `<tr><td colspan="9" style="padding:24px;text-align:center;color:#aaa;font-size:12px">Sin correas con poleas</td></tr>`}</tbody>
+    </table>
+  </td></tr>
+  <tr><td style="padding:10px 4px;color:#9aa0aa;font-size:10px;text-align:center">
+    Generado automáticamente por el tablero CMP · Gestión de Correas, Poleas y Polines
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`;
+
+  try {
+    const transporter = nodemailer.createTransport({ service: "gmail", auth: { user: GMAIL_USER, pass: GMAIL_PASS } });
+    const info = await transporter.sendMail({
+      from:    `"CMP Dashboard" <${GMAIL_USER}>`,
+      to:      DESTINATARIOS.join(", "),
+      subject: `[CMP] Estado de Poleas & TBO (${procLabel}) — ${hoy}`,
+      html:    htmlBody,
+    });
+    return new Response(JSON.stringify({ ok: true, messageId: info.messageId, correas: nCorreas }),
+      { status: 200, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
+  } catch (e: any) {
+    return new Response(JSON.stringify({ ok: false, error: e.message }),
+      { status: 500, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
+  }
+}
+
 Deno.serve(async (req) => {
   // ── CORS preflight ──────────────────────────────────────────
   if (req.method === "OPTIONS") {
@@ -75,6 +175,13 @@ Deno.serve(async (req) => {
   const isUser = req.headers.get("Authorization")?.startsWith("Bearer ");
   if (!isCron && !isUser) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: CORS_HEADERS });
+  }
+
+  // ── Modo "poleas": resumen de Estado Poleas & TBO enviado desde la app ──
+  let reqBody: any = {};
+  try { reqBody = await req.json(); } catch { /* sin cuerpo */ }
+  if (reqBody && reqBody.report === "poleas") {
+    return await enviarResumenPoleas(reqBody);
   }
 
   // ── Datos ───────────────────────────────────────────────────

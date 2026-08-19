@@ -1590,6 +1590,17 @@ function EstadoPoleasView({ overrides, tboOverrides }){
           style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--op-border-strong)',color:'var(--op-text-1)',cursor:sorted.length===0?'not-allowed':'pointer',opacity:sorted.length===0?0.5:1}}>
           🖨 PDF / Imprimir
         </button>
+        <button onClick={async()=>{
+          try{
+            const payload={ report:'poleas', proc:filtroProc, rows:sorted.map(r=>({ nombre:r.nombre, proc:PROC_META[r.proc]?.label||r.proc, tag:r.tag, total:r.total, sinCambio:r.sinCambio, conCambio:r.conCambio, tboEff:r.tboEff||null, tboDias:r.tboDias, tboVenc:r.tboVenc, ultima:r.ultima||null })) };
+            const resp=await fetch(`${SUPABASE_URL}/functions/v1/enviar-resumen-criticos`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify(payload)});
+            const d=await resp.json();
+            alert(d.ok?'✅ Correo enviado correctamente':'Error: '+(d.error||'desconocido'));
+          }catch(e){ alert('Error de red: '+e.message); }
+        }} disabled={sorted.length===0}
+          style={{display:'inline-flex',alignItems:'center',gap:5,padding:'4px 13px',fontSize:'0.786rem',borderRadius:'var(--radius-1)',background:'var(--op-surface-2)',border:'1px solid var(--cmp-blue-500)',color:'var(--cmp-blue-200)',cursor:sorted.length===0?'not-allowed':'pointer',opacity:sorted.length===0?0.5:1}}>
+          📧 Enviar correo
+        </button>
         <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
           {totCorreas} correa{totCorreas!==1?'s':''}{filtroProc!=='todos'?` · ${PROC_META[filtroProc]?.label}`:''}
         </span>
