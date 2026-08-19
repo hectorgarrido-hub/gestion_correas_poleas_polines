@@ -93,7 +93,7 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
     </table></td>`;
 
   const kpisHtml = [
-    kpi("Correas", totCorreas, "#3B82F6", `en ${procSub}`),
+    kpi("Correas totales", totCorreas, "#3B82F6", `en ${procSub}`),
     kpi("Poleas totales", totPoleas, "#3B82F6", `en ${totCorreas} correa${totCorreas !== 1 ? "s" : ""}`),
     kpi("Poleas con cambio", totConCambio, "#16a34a", "con fecha registrada"),
     kpi("Poleas sin cambio", `${totSinCambio > 0 ? "▲ " : ""}${totSinCambio}`, totSinCambio > 0 ? "#b91c1c" : "#16a34a", "nunca cambiadas"),
@@ -130,7 +130,7 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
 <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:0 8px">
 <table width="820" cellpadding="0" cellspacing="0" style="max-width:820px;width:100%">
   <tr><td style="background:#071840;padding:16px 22px;border-radius:6px 6px 0 0">
-    <div style="color:#fff;font-size:16px;font-weight:700">Estado de Poleas &amp; TBO</div>
+    <div style="color:#fff;font-size:16px;font-weight:700">Estado de Poleas &amp; TBO Correas</div>
     <div style="color:#A9C6EB;font-size:11px;margin-top:2px">${procLabel} · ${hoy}</div>
   </td></tr>
   <tr><td style="background:#fff;border:1px solid #dde2ec;border-top:none;padding:14px 15px">
@@ -163,7 +163,7 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
     const info = await transporter.sendMail({
       from:    `"CMP Dashboard" <${GMAIL_USER}>`,
       to:      DESTINATARIOS.join(", "),
-      subject: `[CMP] Estado de Poleas & TBO (${procLabel}) — ${hoy}`,
+      subject: `[CMP] Estado de Poleas & TBO Correas (${procLabel}) — ${hoy}`,
       html:    htmlBody,
     });
     return new Response(JSON.stringify({ ok: true, messageId: info.messageId, correas: totCorreas }),
