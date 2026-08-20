@@ -1940,7 +1940,7 @@ function App({ user, onLogout }){
         </button>
         <button className={`proc-btn${showPoleas?' active':''}`} onClick={()=>{ setShowPoleas(v=>!v); setShowResumen(false); }}
           style={showPoleas?{background:'var(--cmp-blue-600)',borderColor:'var(--cmp-blue-600)',color:'#fff'}:{borderColor:'rgba(43,111,219,.5)',color:'var(--cmp-blue-300)'}}>
-          📊 Estado Poleas & TBO
+          📊 Resumen Estado Poleas & TBO Correas
         </button>
         <span style={{marginLeft:'auto',fontSize:'0.714rem',color:'var(--op-text-3)'}}>
           {!showResumen && !showPoleas && <>{belts.length} correas</> }

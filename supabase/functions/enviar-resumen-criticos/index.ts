@@ -116,11 +116,11 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
     return `<tr style="background:${bg}">
       <td style="padding:5px 10px;font-weight:600;font-size:11px;border-left:3px solid ${leftBar}">${esc(r.nombre)}</td>
       <td style="padding:5px 8px;font-size:10px;color:#666">${esc(r.proc)}</td>
-      <td style="padding:5px 8px;text-align:center;font-size:11px;font-family:monospace">${esc(r.total)}</td>
-      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:1px 8px;border-radius:3px;background:${scBg};color:${scCol};border:1px solid ${scCol}44;font-weight:700;font-size:11px">${esc(r.sinCambio)}</span></td>
-      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:1px 8px;border-radius:3px;background:#e9f7ef;color:#15803d;border:1px solid #15803d44;font-weight:700;font-size:11px">${esc(r.conCambio)}</span></td>
       <td style="padding:5px 8px;text-align:center;font-size:10px;font-family:monospace;color:#555">${esc(r.tboEff)}</td>
       <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;padding:1px 8px;border-radius:3px;background:${tboBg};color:${tboCol};border:1px solid ${tboCol}44;font-weight:700;font-size:10px;white-space:nowrap">${tboTxt}</span></td>
+      <td style="padding:5px 8px;text-align:center;font-size:11px;font-family:monospace">${esc(r.total)}</td>
+      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:1px 8px;border-radius:3px;background:#e9f7ef;color:#15803d;border:1px solid #15803d44;font-weight:700;font-size:11px">${esc(r.conCambio)}</span></td>
+      <td style="padding:5px 8px;text-align:center"><span style="display:inline-block;min-width:22px;padding:1px 8px;border-radius:3px;background:${scBg};color:${scCol};border:1px solid ${scCol}44;font-weight:700;font-size:11px">${esc(r.sinCambio)}</span></td>
       <td style="padding:5px 8px;font-size:10px;font-family:monospace;color:#777;white-space:nowrap">${esc(r.ultima)}</td>
     </tr>`;
   }).join("");
@@ -143,11 +143,11 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
       <thead><tr style="background:#f0f2f7">
         <th style="text-align:left;color:#888;${thBase}">Correa</th>
         <th style="text-align:left;color:#888;${thBase}">Proceso</th>
-        <th style="text-align:center;color:#888;${thBase}">Total Poleas</th>
-        <th style="text-align:center;color:#b91c1c;${thBase}">▲ Poleas Sin Cambio</th>
-        <th style="text-align:center;color:#15803d;${thBase}">● Poleas Cambiadas</th>
         <th style="text-align:center;color:#888;${thBase}">TBO Correa</th>
         <th style="text-align:center;color:#888;${thBase}">Estado TBO Correa</th>
+        <th style="text-align:center;color:#888;${thBase}">Total Poleas</th>
+        <th style="text-align:center;color:#15803d;${thBase}">● Poleas Cambiadas</th>
+        <th style="text-align:center;color:#b91c1c;${thBase}">▲ Poleas Sin Cambio</th>
         <th style="text-align:left;color:#888;${thBase}">Últ. Cambio Polea</th>
       </tr></thead>
       <tbody>${bodyRows || `<tr><td colspan="8" style="padding:24px;text-align:center;color:#aaa;font-size:12px">Sin correas con poleas</td></tr>`}</tbody>
