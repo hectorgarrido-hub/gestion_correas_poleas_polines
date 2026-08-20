@@ -95,7 +95,7 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
   const totFeeders = k.feeders ?? 0;
   const kpisHtml = [
     kpi("Correas totales", totCorreas, "#3B82F6", `en ${procSub}`),
-    kpi("Feeders (Embarque)", totFeeders, "#3B82F6", "alimentadores"),
+    kpi("Correas Feeder", totFeeders, "#3B82F6", "alimentadores"),
     kpi("TBO Correas vencidos", `${tboVenc > 0 ? "▲ " : ""}${tboVenc}`, tboVenc > 0 ? "#b91c1c" : "#16a34a", "requieren revisión"),
     kpi("TBO Correas próximos", tboProx, "#d9a441", "≤ 90 días"),
     kpi("Poleas totales", totPoleas, "#3B82F6", `en ${totCorreas} correa${totCorreas !== 1 ? "s" : ""}`),
