@@ -1513,6 +1513,8 @@ function EstadoPoleasView({ overrides, tboOverrides }){
   const correasSinCambio=filtered.filter(r=>r.sinCambio>0).length;
   const tboVencidos=filtered.filter(r=>r.tboVenc).length;
   const tboProximos=filtered.filter(r=>!r.tboVenc && r.tboDias!=null && r.tboDias<=90).length;
+  const FEED_RE=/^FS\d+-\d+$/;
+  const totFeeders=Object.keys(PROC_META).filter(p=>filtroProc==='todos'||p===filtroProc).reduce((s,p)=>s+Object.keys(window.POLINES_DATA[p]||{}).filter(t=>FEED_RE.test(t)).length,0);
 
   // color helpers
   function sinCambioCell(n,total){
@@ -1592,7 +1594,7 @@ function EstadoPoleasView({ overrides, tboOverrides }){
         </button>
         <button onClick={async()=>{
           try{
-            const payload={ report:'poleas', proc:filtroProc==='todos'?'Todos los procesos':(PROC_META[filtroProc]?.label||filtroProc), kpis:{ correas:totCorreas, poleas:totPoleas, conCambio:totConCambio, sinCambio:totSinCambio, tboVenc:tboVencidos, tboProx:tboProximos }, rows:sorted.map(r=>({ nombre:r.nombre, proc:PROC_META[r.proc]?.label||r.proc, total:r.total, sinCambio:r.sinCambio, conCambio:r.conCambio, tboEff:r.tboEff||null, tboDias:r.tboDias, tboVenc:r.tboVenc, ultima:r.ultima||null })) };
+            const payload={ report:'poleas', proc:filtroProc==='todos'?'Todos los procesos':(PROC_META[filtroProc]?.label||filtroProc), kpis:{ correas:totCorreas, feeders:totFeeders, poleas:totPoleas, conCambio:totConCambio, sinCambio:totSinCambio, tboVenc:tboVencidos, tboProx:tboProximos }, rows:sorted.map(r=>({ nombre:r.nombre, proc:PROC_META[r.proc]?.label||r.proc, total:r.total, sinCambio:r.sinCambio, conCambio:r.conCambio, tboEff:r.tboEff||null, tboDias:r.tboDias, tboVenc:r.tboVenc, ultima:r.ultima||null })) };
             const resp=await fetch(`${SUPABASE_URL}/functions/v1/enviar-resumen-criticos`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify(payload)});
             const d=await resp.json();
             alert(d.ok?'✅ Correo enviado correctamente':'Error: '+(d.error||'desconocido'));
@@ -1607,11 +1609,26 @@ function EstadoPoleasView({ overrides, tboOverrides }){
       </div>
 
       {/* KPI strip */}
-      <div className="kpi-strip" style={{flexShrink:0,gridTemplateColumns:'repeat(6,1fr)'}}>
+      <div className="kpi-strip" style={{flexShrink:0,gridTemplateColumns:'repeat(7,1fr)'}}>
         <div className="kpi" style={{borderTopColor:'var(--cmp-blue-400)'}}>
           <div className="kpi-lbl">Correas totales</div>
           <div className="kpi-val">{totCorreas}</div>
           <div className="kpi-sub">en {filtroProc==='todos'?'todos los procesos':PROC_META[filtroProc]?.label}</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:'var(--cmp-blue-400)'}}>
+          <div className="kpi-lbl">Feeders (Embarque)</div>
+          <div className="kpi-val">{totFeeders}</div>
+          <div className="kpi-sub">alimentadores</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:tboVencidos>0?'var(--alarm-critical)':'var(--status-running)'}}>
+          <div className="kpi-lbl">TBO Correas vencidos</div>
+          <div className="kpi-val" style={{color:tboVencidos>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{tboVencidos>0?'▲ ':''}{tboVencidos}</div>
+          <div className="kpi-sub">requieren revisión</div>
+        </div>
+        <div className="kpi" style={{borderTopColor:'var(--alarm-warning-light)'}}>
+          <div className="kpi-lbl">TBO Correas próximos</div>
+          <div className="kpi-val" style={{color:tboProximos>0?'var(--alarm-warning-light)':'var(--op-text-1)'}}>{tboProximos}</div>
+          <div className="kpi-sub">≤ 90 días</div>
         </div>
         <div className="kpi" style={{borderTopColor:'var(--cmp-blue-400)'}}>
           <div className="kpi-lbl">Poleas totales</div>
@@ -1627,16 +1644,6 @@ function EstadoPoleasView({ overrides, tboOverrides }){
           <div className="kpi-lbl">Poleas sin cambio</div>
           <div className="kpi-val" style={{color:totSinCambio>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{totSinCambio>0?'▲ ':''}{totSinCambio}</div>
           <div className="kpi-sub">nunca cambiadas</div>
-        </div>
-        <div className="kpi" style={{borderTopColor:tboVencidos>0?'var(--alarm-critical)':'var(--status-running)'}}>
-          <div className="kpi-lbl">TBO Correas vencidos</div>
-          <div className="kpi-val" style={{color:tboVencidos>0?'var(--alarm-critical-light)':'var(--op-text-1)'}}>{tboVencidos>0?'▲ ':''}{tboVencidos}</div>
-          <div className="kpi-sub">requieren revisión</div>
-        </div>
-        <div className="kpi" style={{borderTopColor:'var(--alarm-warning-light)'}}>
-          <div className="kpi-lbl">TBO Correas próximos</div>
-          <div className="kpi-val" style={{color:tboProximos>0?'var(--alarm-warning-light)':'var(--op-text-1)'}}>{tboProximos}</div>
-          <div className="kpi-sub">≤ 90 días</div>
         </div>
       </div>
 
