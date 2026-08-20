@@ -1669,11 +1669,11 @@ function EstadoPoleasView({ overrides, tboOverrides }){
               <tr style={{background:'var(--op-surface-2)'}}>
                 <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Correa</th>
                 <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Proceso</th>
-                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Total Poleas</th>
-                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--alarm-critical-light)',fontWeight:600}}>▲ Poleas Sin Cambio</th>
-                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--status-running-light)',fontWeight:600}}>● Poleas Cambiadas</th>
                 <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>TBO Correa</th>
                 <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Estado TBO Correa</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600}}>Total Poleas</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--status-running-light)',fontWeight:600}}>● Poleas Cambiadas</th>
+                <th style={{textAlign:'center',padding:'7px 10px',fontSize:'0.714rem',color:'var(--alarm-critical-light)',fontWeight:600}}>▲ Poleas Sin Cambio</th>
                 <th style={{textAlign:'left',padding:'7px 10px',fontSize:'0.714rem',color:'var(--op-text-3)',fontWeight:600,whiteSpace:'nowrap'}}>Últ. Cambio Polea</th>
               </tr>
             </thead>
@@ -1690,16 +1690,16 @@ function EstadoPoleasView({ overrides, tboOverrides }){
                       <span style={{display:'inline-block',width:7,height:7,borderRadius:'50%',background:PROC_META[r.proc].dot,marginRight:5,verticalAlign:'middle'}}></span>
                       <span style={{verticalAlign:'middle'}}>{PROC_META[r.proc].label}</span>
                     </td>
-                    <td style={{textAlign:'center',padding:'5px 10px',fontVariantNumeric:'tabular-nums',color:'var(--op-text-1)'}}>{r.total}</td>
-                    <td style={{textAlign:'center',padding:'5px 10px'}}>
-                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:sc.bg,color:sc.col,border:`1px solid ${sc.bd}`,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.sinCambio}</span>
-                    </td>
-                    <td style={{textAlign:'center',padding:'5px 10px'}}>
-                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:'var(--status-running-bg)',color:'var(--status-running-light)',border:'1px solid var(--status-running)',fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.conCambio}</span>
-                    </td>
                     <td style={{textAlign:'center',padding:'5px 10px',fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',color:'var(--op-text-2)'}}>{r.tboEff||'—'}</td>
                     <td style={{textAlign:'center',padding:'5px 10px'}}>
                       <span style={{display:'inline-block',padding:'2px 9px',borderRadius:'var(--radius-1)',background:tc.bg,color:tc.col,border:`1px solid ${tc.bd}`,fontWeight:700,fontSize:'0.786rem',whiteSpace:'nowrap'}}>{tc.txt}</span>
+                    </td>
+                    <td style={{textAlign:'center',padding:'5px 10px',fontVariantNumeric:'tabular-nums',color:'var(--op-text-1)'}}>{r.total}</td>
+                    <td style={{textAlign:'center',padding:'5px 10px'}}>
+                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:'var(--status-running-bg)',color:'var(--status-running-light)',border:'1px solid var(--status-running)',fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.conCambio}</span>
+                    </td>
+                    <td style={{textAlign:'center',padding:'5px 10px'}}>
+                      <span style={{display:'inline-block',minWidth:26,padding:'2px 8px',borderRadius:'var(--radius-1)',background:sc.bg,color:sc.col,border:`1px solid ${sc.bd}`,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>{r.sinCambio}</span>
                     </td>
                     <td style={{padding:'5px 10px',fontFamily:'var(--font-mono)',fontVariantNumeric:'tabular-nums',color:'var(--op-text-3)',fontSize:'0.786rem',whiteSpace:'nowrap'}}>{r.ultima||'—'}</td>
                   </tr>
