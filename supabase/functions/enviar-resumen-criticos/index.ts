@@ -83,7 +83,7 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
   const tboProx      = k.tboProx   ?? rows.filter((r) => !r.tboVenc && num(r.tboDias) != null && (num(r.tboDias) as number) <= 90).length;
   const procSub = procLabel === "Todos los procesos" ? "todos los procesos" : procLabel;
 
-  const kpi = (label: string, value: number | string, color: string, sub: string) => `<td width="16.66%" style="padding:0 3px;vertical-align:top">
+  const kpi = (label: string, value: number | string, color: string, sub: string) => `<td width="14.28%" style="padding:0 3px;vertical-align:top">
     <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#fff;border:1px solid #dde2ec;border-top:3px solid ${color}">
       <tr><td style="padding:7px 8px">
         <div style="font-size:8px;color:#888;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;line-height:1.25;min-height:20px">${label}</div>
@@ -92,13 +92,15 @@ async function enviarResumenPoleas(body: any): Promise<Response> {
       </td></tr>
     </table></td>`;
 
+  const totFeeders = k.feeders ?? 0;
   const kpisHtml = [
     kpi("Correas totales", totCorreas, "#3B82F6", `en ${procSub}`),
+    kpi("Feeders (Embarque)", totFeeders, "#3B82F6", "alimentadores"),
+    kpi("TBO Correas vencidos", `${tboVenc > 0 ? "▲ " : ""}${tboVenc}`, tboVenc > 0 ? "#b91c1c" : "#16a34a", "requieren revisión"),
+    kpi("TBO Correas próximos", tboProx, "#d9a441", "≤ 90 días"),
     kpi("Poleas totales", totPoleas, "#3B82F6", `en ${totCorreas} correa${totCorreas !== 1 ? "s" : ""}`),
     kpi("Poleas con cambio", totConCambio, "#16a34a", "con fecha registrada"),
     kpi("Poleas sin cambio", `${totSinCambio > 0 ? "▲ " : ""}${totSinCambio}`, totSinCambio > 0 ? "#b91c1c" : "#16a34a", "nunca cambiadas"),
-    kpi("TBO Correas vencidos", `${tboVenc > 0 ? "▲ " : ""}${tboVenc}`, tboVenc > 0 ? "#b91c1c" : "#16a34a", "requieren revisión"),
-    kpi("TBO Correas próximos", tboProx, "#d9a441", "≤ 90 días"),
   ].join("");
 
   const bodyRows = rows.map((r, i) => {
