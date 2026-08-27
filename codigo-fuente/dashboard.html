@@ -376,9 +376,9 @@ function mergePolea(proc, tag, p, overrides){
 /* ── Diagram ──────────────────────────────────────────── */
 /* Tipo de polea -> nombre corto y codigo de 3 letras para el diagrama. */
 const TIPO_ABBR = { MOTRIZ:'Motriz', DEFLECTORA:'Deflectora', TENSORA:'Tensora', COLA:'Cola',
-                    QUIEBRE:'Quiebre', CONTRAPESO:'Contrapeso', ENVOLVENTE:'Envolvente' };
+                    QUIEBRE:'Quiebre', CONTRAPESO:'Contrapeso', ENVOLVENTE:'Envolvente', CULATA:'Culata', DESCARGA:'Descarga' };
 const TIPO_CODE = { MOTRIZ:'MOT', DEFLECTORA:'DEF', TENSORA:'TEN', COLA:'COL',
-                    QUIEBRE:'QUI', CONTRAPESO:'CPE', ENVOLVENTE:'ENV' };
+                    QUIEBRE:'QUI', CONTRAPESO:'CPE', ENVOLVENTE:'ENV', CULATA:'CUL', DESCARGA:'DES' };
 function tipoWord(t){ return (t||'').split(' (')[0].split(' ')[0].toUpperCase(); }
 function abbrevTipo(t){ const w=tipoWord(t); return TIPO_ABBR[w] || (w ? w.charAt(0)+w.slice(1).toLowerCase() : ''); }
 function codeTipo(t){ const w=tipoWord(t); return TIPO_CODE[w] || w.slice(0,3); }
@@ -2060,7 +2060,7 @@ function App({ user, onLogout }){
         </div>
 
         <div className="polea-grid">
-          {poleas.map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
+          {[...poleas].sort((a,b)=>a.num-b.num).map(p=><PoleaCard key={p.num} p={p} onEdit={openEdit} canEdit={canEdit}/>)}
         </div>
         </>)}
 
