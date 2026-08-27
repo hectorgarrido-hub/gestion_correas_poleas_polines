@@ -175,136 +175,136 @@ window.POLEAS_DATA = {
    "nombre": "Correa 3",
    "tbo": "25-06-2027",
    "poleas": [
-    {
-     "num": 1,
-     "tipo": "MOTRIZ (762x965mm)",
-     "fecha": "25-10-2011",
-     "dias": 5334,
-     "orden": "10211558",
-     "aviso": "10552740",
-     "desc": "Cambio polea motriz CT-03",
-     "status": "crit"
-    },
-    {
-     "num": 2,
-     "tipo": "DEFLECTORA (508x965mm)",
-     "fecha": "01-06-2023",
-     "dias": 1097,
-     "orden": "10894683",
-     "aviso": "14372246",
-     "desc": "Cambio polea deflectora CT-03",
-     "status": "crit"
-    },
-    {
-     "num": 3,
-     "tipo": "TENSORA (508x965mm)",
-     "fecha": "08-09-2020",
-     "dias": 2094,
-     "orden": "10741573",
-     "aviso": "12751650",
-     "desc": "Cambio de polea CT-03 (HAPT3720)",
-     "status": "crit"
-    },
-    {
-     "num": 4,
-     "tipo": "DEFLECTORA (508x965mm)",
-     "fecha": "01-06-2023",
-     "dias": 1097,
-     "orden": "10894684",
-     "aviso": "14446940",
-     "desc": "Apoyo cambio polea deflectora CT-03",
-     "status": "crit"
-    },
-    {
-     "num": 5,
-     "tipo": "COLA (508x965mm)",
-     "fecha": null,
-     "dias": null,
-     "orden": null,
-     "aviso": null,
-     "desc": "Sin cambios registrados",
-     "status": "none"
-    },
-    {
-     "num": 6,
-     "tipo": "DEFLECTORA (508x965mm)",
-     "fecha": null,
-     "dias": null,
-     "orden": null,
-     "aviso": null,
-     "desc": "Sin cambios registrados",
-     "status": "none"
-    },
-    {
-     "num": 7,
-     "tipo": "TENSORA (508x965mm)",
-     "fecha": null,
-     "dias": null,
-     "orden": null,
-     "aviso": null,
-     "desc": "Sin cambios registrados",
-     "status": "none"
-    },
-    {
-     "num": 8,
-     "tipo": "DEFLECTORA (508x965mm)",
-     "fecha": null,
-     "dias": null,
-     "orden": null,
-     "aviso": null,
-     "desc": "Sin cambios registrados",
-     "status": "none"
-    },
-    {
-     "num": 9,
-     "tipo": "COLA (508x965mm)",
-     "fecha": null,
-     "dias": null,
-     "orden": null,
-     "aviso": null,
-     "desc": "Sin cambios registrados",
-     "status": "none"
-    }
+      {
+         "num": 3,
+         "tipo": "TENSORA (508x965mm)",
+         "fecha": "08-09-2020",
+         "dias": 2094,
+         "orden": "10741573",
+         "aviso": "12751650",
+         "desc": "Cambio de polea CT-03 (HAPT3720)",
+         "status": "crit"
+      },
+      {
+         "num": 1,
+         "tipo": "MOTRIZ (762x965mm)",
+         "fecha": "25-10-2011",
+         "dias": 5334,
+         "orden": "10211558",
+         "aviso": "10552740",
+         "desc": "Cambio polea motriz CT-03",
+         "status": "crit"
+      },
+      {
+         "num": 5,
+         "tipo": "COLA (508x965mm)",
+         "fecha": null,
+         "dias": null,
+         "orden": null,
+         "aviso": null,
+         "desc": "Sin cambios registrados",
+         "status": "none"
+      },
+      {
+         "num": 2,
+         "tipo": "DEFLECTORA (508x965mm)",
+         "fecha": "01-06-2023",
+         "dias": 1097,
+         "orden": "10894683",
+         "aviso": "14372246",
+         "desc": "Cambio polea deflectora CT-03",
+         "status": "crit"
+      },
+      {
+         "num": 4,
+         "tipo": "DEFLECTORA (508x965mm)",
+         "fecha": "01-06-2023",
+         "dias": 1097,
+         "orden": "10894684",
+         "aviso": "14446940",
+         "desc": "Apoyo cambio polea deflectora CT-03",
+         "status": "crit"
+      },
+      {
+         "num": 7,
+         "tipo": "DESCARGA (508x965mm)",
+         "fecha": null,
+         "dias": null,
+         "orden": null,
+         "aviso": null,
+         "desc": "Sin cambios registrados",
+         "status": "none"
+      },
+      {
+         "num": 9,
+         "tipo": "COLA (508x965mm)",
+         "fecha": null,
+         "dias": null,
+         "orden": null,
+         "aviso": null,
+         "desc": "Sin cambios registrados",
+         "status": "none"
+      },
+      {
+         "num": 8,
+         "tipo": "DEFLECTORA (508x965mm)",
+         "fecha": null,
+         "dias": null,
+         "orden": null,
+         "aviso": null,
+         "desc": "Sin cambios registrados",
+         "status": "none"
+      },
+      {
+         "num": 6,
+         "tipo": "CULATA (508x965mm)",
+         "fecha": null,
+         "dias": null,
+         "orden": null,
+         "aviso": null,
+         "desc": "Sin cambios registrados",
+         "status": "none"
+      }
    ],
    "diag": [
-    [
-     50,
-     50
-    ],
-    [
-     120,
-     100
-    ],
-    [
-     190,
-     80
-    ],
-    [
-     260,
-     120
-    ],
-    [
-     330,
-     60
-    ],
-    [
-     400,
-     110
-    ],
-    [
-     470,
-     90
-    ],
-    [
-     540,
-     100
-    ],
-    [
-     600,
-     50
-    ]
+      [
+         70,
+         92
+      ],
+      [
+         130,
+         90
+      ],
+      [
+         180,
+         104
+      ],
+      [
+         225,
+         92
+      ],
+      [
+         285,
+         104
+      ],
+      [
+         360,
+         60
+      ],
+      [
+         440,
+         74
+      ],
+      [
+         470,
+         64
+      ],
+      [
+         580,
+         96
+      ]
    ]
-  },
+},
   "FS23240": {
    "nombre": "Correa 5",
    "tbo": "28-08-2034",
